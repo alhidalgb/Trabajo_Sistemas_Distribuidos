@@ -11,7 +11,7 @@ import java.util.*;
 
 public class ServidorRuleta {
 
-	public static List<OutputStream> clientesConectados = Collections.synchronizedList(new ArrayList<>());
+	public static List<Socket> clientesConectados = Collections.synchronizedList(new ArrayList<>());
 	
 	
 	public void IniciarServidor(int puerto) {
@@ -22,17 +22,14 @@ public class ServidorRuleta {
 			ExecutorService pool = Executors.newCachedThreadPool();
 				// 1. INICIAR EL TEMPORIZADOR GLOBAL (El crupier automático)
 		    ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);){
-		
 			
 	        
 	        // Programamos la tarea "RondaDeJuego" para que ocurra cada 30 segundos
 	        // Parametros: Tarea, retardo inicial, periodo, unidad de tiempo
-	        scheduler.scheduleAtFixedRate(new GirarRueda(clientesConectados), 0, 30, TimeUnit.SECONDS);
+	        scheduler.scheduleAtFixedRate(new GiraPelotita(clientesConectados), 0, 30, TimeUnit.SECONDS);
 			
 			
-		
 			
-				
 			
 			while(true) {
 				
@@ -40,7 +37,7 @@ public class ServidorRuleta {
 				try {
 					
 					Socket cliente = server.accept();
-					clientesConectados.add(cliente.getOutputStream());
+					clientesConectados.add(cliente);
 					
 					
 					

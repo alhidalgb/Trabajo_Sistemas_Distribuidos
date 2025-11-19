@@ -32,6 +32,21 @@ public class Casilla implements Serializable{
 		
 		
 	}
+
+	public int getNumero() {
+		// TODO Auto-generated method stub
+		return numero;
+	}
+
+	public String getColor() {
+		// TODO Auto-generated method stub
+		return color.toString();
+	}
+
+	public int getDocena() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 	
 
 }
