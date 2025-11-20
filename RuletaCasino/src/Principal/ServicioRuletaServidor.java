@@ -7,21 +7,21 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
-public class ServicioRuleta {
+import ModeloDominio.Apuesta;
+import ModeloDominio.Casilla;
+import ModeloDominio.Jugador;
+
+public class ServicioRuletaServidor {
 
 	
 	//Lista con todos los jugadores iniciados sesion.
 	private List<Jugador> jugadores;
 	
-	private Map<Jugador, Socket> jugadorSocket = new ConcurrentHashMap<>();
-	
-	
-	
 	private List<Apuesta> apuestas = new ArrayList<>();
-	private List<Socket> clientesConectados;
+	//private List<Socket> clientesConectados;
 	
 	
-	private Casilla casillaGanadora;
+	//private Casilla casillaGanadora;
 	
 	private CountDownLatch noVaMas = new CountDownLatch(1);
 	private CountDownLatch VaMas = new CountDownLatch(1);
@@ -57,14 +57,10 @@ public class ServicioRuleta {
 	
 	//------------------------
 	
-	public void setCasilla(Casilla casilla) {
-		
-		this.casillaGanadora=casilla;
-		
-	}
 	
 	
-	public int anadirJugador(Jugador jug, Socket cliente){
+	
+	public int anadirJugador(Jugador jug){
 		
 		if(jugadores.contains(jug)) {		
 			
@@ -84,7 +80,8 @@ public class ServicioRuleta {
 	
 	public void establecerConexion(Jugador jug, Socket cliente) {
 		
-		this.jugadorSocket.put(jug, cliente);
+		jug.setConexion(cliente);		
+		this.jugadores.add(jug);
 		
 	}
 	
@@ -106,7 +103,12 @@ public class ServicioRuleta {
 	public void repartirPremio(Casilla ganadora) {
 		
 		
-		
+		for(Jugador j : this.jugadores) {
+			
+			
+			
+			
+		}
 		
 		
 	}

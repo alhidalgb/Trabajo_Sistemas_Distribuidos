@@ -1,31 +1,40 @@
 package Principal;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.Socket;
 import java.time.LocalDate;
+
+import ModeloDominio.Jugador;
 
 public class AtenderJugador implements Runnable{
 
 	
 
 	private Socket cliente;
-	private ServicioRuleta rule;
+	private ServicioRuletaServidor rule;
 
 	
-	//Seguramente hay que eliminar.
+	//Este jugador es para hacer mejor las llamadas. No hay que modificarlo en esta clase, se modifica solo usando el "paso por referencia de java"
 	private Jugador jugador;
 
 	
 	
-	public AtenderJugador(Socket cliente, ServicioRuleta rule) {
+	public AtenderJugador(Socket cliente, ServicioRuletaServidor rule) {
 		
 		this.cliente= cliente;
 		this.rule=rule;
 		this.jugador=null;
 	}
+	
+	
 	
 	@Override
 	public void run() {
@@ -34,108 +43,154 @@ public class AtenderJugador implements Runnable{
 		boolean iniciado=false;
 		
 		
-		try(BufferedReader bff= new BufferedReader(new InputStreamReader((System.in)))){
+		
+		//Si sale del trycatch se ha caido la conexion.
+		
+		try(InputStream is = cliente.getInputStream();
+				OutputStream os = cliente.getOutputStream()){
 			
-			System.out.println("¿Que quieres hacer?");
-			System.out.println("1-Iniciar sesion:");
-			System.out.println("2-Registrar sesion:");
+			BufferedReader bis= new BufferedReader(new InputStreamReader(is));
+
 			
-			String i = bff.readLine();
+			os.write("¿Que quieres hacer?".getBytes());
+			os.write("\r\n".getBytes());
+			os.write("1-Iniciar sesion:".getBytes());
+			os.write("\r\n".getBytes());
+			os.write("2-Registrar sesion:".getBytes());
+			os.write("\r\n".getBytes());
+			os.flush();
 			
-			
+			String i = bis.readLine();
 			
 			if(i.equals("1")) {
 				
-				iniciado=this.iniciarSesion();
+				iniciado=this.iniciarSesion(is,os);
 				
 			}else {
 				
-				//Si no quiere iniciar sesion se registar, no dejamos escapar a nadie.
+				//Si no quiere iniciar sesion se regista, no dejamos escapar a nadie.Todo el mundo debe consumir.
 				
-				iniciado=this.registrarSesion();
+				iniciado=this.registrarSesion(is,os);
 			}
+			
+			
+			
+			if(iniciado) {
+				
+				
+				while(true) {
+					
+					//Hacemos apuestas-----------------.
+					
+					this.empezarJugar();
+					
+				}
+				
+				
+			}else {
+				
+				os.write("-ERROR-".getBytes());
+				os.write("\r\n".getBytes());
+				os.write("Ha ocurrido un error en inicio de sesion, intentelo mas tarde.".getBytes());
+				os.write("\r\n".getBytes());
+				os.write("Disculpa las molestias".getBytes());
+				os.write("\r\n".getBytes());
+				os.flush();
+				
+				
+				
+				//Desconectar
+				
+			}
+			
 			
 			
 		}catch(IOException e) {e.printStackTrace();}
-		
-		
-		
-		//Hacemos apuestas.
-		
-		
-		if(iniciado) {
-			
-			try {
-				
-				//¿Quieres hacer apuestas?
-				
-				//Espero a que se pueda apostar. 
-				this.rule.VaMasWait();
-				//Crea apuestas
-				this.rule.anadirApuesta(null);//Hilo distinto
-				//Espera a girar la pelota
-				this.rule.noVaMasWait();
-				//Se cierran las apuestas
-				
-				//Cierro el hilo
-				
-				
-				//Vuleve a empezar
-				
-				
-				
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			
-			
-		}else {
-			
-			System.out.println("Ha ocurrido un error en inicio de sesion, intentelo mas tarde.");
-			System.out.println("Disculpa las molestias");
-			
-			
-			//Desconectar
-			
-		}
-		
-		
-		
 				
 	}
 	
 	
-	
-	
-	
-	private boolean iniciarSesion() {
+	private void empezarJugar() {
 		
-		
-		try(BufferedReader bff= new BufferedReader(new InputStreamReader(System.in))){
+		try {
+			
+			//Falta añadir funcionalidades:
+			
+			//Añadir saldo-
+			//Seguir jugando
+			//Desconectar.
 			
 			
-			System.out.println("Nombre de usuario:");
-			String ID = bff.readLine();
+			//Funcionalidad jugar.
+			//Espero a que se pueda apostar. 
+			this.rule.VaMasWait();
+						
+			
+			//Crea apuestas
+			
+			CrearApuestas apuesta = new CrearApuestas(this.rule,this.jugador);	
+			apuesta.start();
+			
+			//Espera a girar la pelota
+			this.rule.noVaMasWait();
+			//Se cierran las apuestas
+			
+			apuesta.interrupt();
+			//Cierro el hilo
+			
+			
+			//Vuleve a empezar
+			
+			
+			//Metodo desconectar
+			
+			
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			//e.printStackTrace();
+			
+			//Si salta la exception no hago nada, sigo jugando.
+			
+		}
+		
+		
+	}
+	
+	
+	
+	private boolean iniciarSesion(InputStream is, OutputStream os) {
+		
+		
+		try{
+			
+			BufferedReader bis= new BufferedReader(new InputStreamReader(is));
+			
+			os.write("---INICIANDO SESION---".getBytes());
+			os.write("\r\n".getBytes());
+			os.write("Nombre de usuario:".getBytes());
+			os.write("\r\n".getBytes());
+			os.flush();
+			
+			String ID=bis.readLine();
 			
 			this.jugador = this.rule.getJugador(ID);
 			
 			if(jugador.equals(null)) {
 				
-				System.out.println("Nombre de usuario no encontrado, ¿Quieres registrar sesion?");
 				
-				String n = bff.readLine();
-
+				os.write("Nombre de usuario no encontrado, ¿Quieres registrar sesion?".getBytes());
+				os.write("\r\n".getBytes());
+				os.flush();
+				String n = bis.readLine();
 				
 				if(n.equals("si")) {
 					
-					return this.registrarSesion();
+					return this.registrarSesion(is,os);
 					
 					
 				}else {
 					
-					return this.iniciarSesion();
+					return this.iniciarSesion(is,os);
 					
 				}
 				
@@ -158,21 +213,27 @@ public class AtenderJugador implements Runnable{
 		
 	}
 	
-	private boolean registrarSesion() {
+	private boolean registrarSesion(InputStream is, OutputStream os) {
 		
 		
 		
-		try(BufferedReader bff= new BufferedReader(new InputStreamReader((System.in)))){
+		try{
+			
+			BufferedReader bis= new BufferedReader(new InputStreamReader((is)));
+			
+			os.write("---REGISTRANDO SESION---".getBytes());
+			os.write("\r\n".getBytes());
+			os.write("Nombre de usuario:".getBytes());
+			os.flush();
+			
 			
 			//Si por algun casual no funciona bien el asignamiento de nombre de usuario, nos aseguramos de que ponemos uno que no se va repetir
 			String ID="user834959347"+ LocalDate.now().toString();
 			
-			System.out.println("Nombre de usuario:");
-			
 			
 			while(true) {
 				
-				ID = bff.readLine();
+				ID = bis.readLine();
 				
 				if(this.rule.getJugador(ID)==null) {
 					
@@ -181,8 +242,8 @@ public class AtenderJugador implements Runnable{
 					
 				}
 				
-				System.out.println("Nombre de usuario en uso, prueba otra vez.");
-				
+				os.write("Nombre de usuario en uso, prueba otra vez.".getBytes());
+				os.flush();
 				
 			}
 			
@@ -191,26 +252,29 @@ public class AtenderJugador implements Runnable{
 			
 			
 			
-			System.out.println("Saldo a introducir:");
-			
-			
-			
+			os.write("Saldo a introducir:".getBytes());
+			os.flush();
+				
 			//Nos aseguramos de que introduca un valor valido.
 			boolean correcto=true;
 			double saldo =0;//Si no empieza siempre con 0€
 			while(correcto) {
 				
 				try {
-					String sal = bff.readLine();
+					String sal = bis.readLine();
 					saldo = Double.parseDouble(sal);
 					correcto=false;
 					
 				}catch (NumberFormatException e) {
-					System.out.println("Introduce un valor valido:");
+					os.write("Introduce un valor valido:".getBytes());
+					os.flush();
 				}
 			}
 			
-			int i=this.rule.anadirJugador(new Jugador(ID,saldo),cliente);
+			
+			
+			
+			int i=this.rule.anadirJugador(new Jugador(ID,saldo));
 				
 			//0-Jugador ya existe.
 			//1-ha añadido el jugador con exito
@@ -221,7 +285,8 @@ public class AtenderJugador implements Runnable{
 			
 			case 0:
 				
-				return this.iniciarSesion();
+				os.write("Tu sabras pero tu usuario esta en uso. Incia Sesion.".getBytes());
+				return this.iniciarSesion(is,os);
 				
 			case 1:
 				

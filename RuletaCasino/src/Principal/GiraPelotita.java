@@ -10,13 +10,15 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import ModeloDominio.Casilla;
+
 
 public class GiraPelotita implements Runnable {
 
-	private ServicioRuleta rule;
+	private ServicioRuletaServidor rule;
 	
 	//SOLO LE PASA EL SERVICIORULETA Y CADA X SEGUNDOS HACE LAS COSAS.
-	public GiraPelotita(ServicioRuleta rule) {
+	public GiraPelotita(ServicioRuletaServidor rule) {
 		
 		this.rule=rule;
 	}
@@ -40,7 +42,7 @@ public class GiraPelotita implements Runnable {
 		    e.printStackTrace();
 		}
 		
-		this.rule.calcularPremio(new Casilla(numeroGanador));
+		this.rule.repartirPremio(new Casilla(numeroGanador));
 		this.rule.resetNoVaMas();
 		
 	}

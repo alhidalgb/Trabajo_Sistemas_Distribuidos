@@ -1,4 +1,4 @@
-package Principal;
+package ModeloDominio;
 
 public enum TipoApuesta {
 

@@ -2,13 +2,27 @@ package Principal;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 
-public class CrearApuestas implements Runnable {
+import ModeloDominio.Apuesta;
+import ModeloDominio.Jugador;
+import ModeloDominio.TipoApuesta;
+
+public class CrearApuestas extends Thread {
 
 	
-	private ServicioRuleta rule;
+	private ServicioRuletaServidor rule;
 	private Jugador jugador;
+	
+	
+	public CrearApuestas(ServicioRuletaServidor rule,Jugador jug) {
+		
+		this.jugador=jug;
+		this.rule=rule;
+		
+	}
 	
 	@Override
 	public void run() {
@@ -16,14 +30,27 @@ public class CrearApuestas implements Runnable {
 		
 		
 		
-		try(BufferedReader bff = new BufferedReader(new InputStreamReader(System.in))){
+		try{
 			
+			OutputStream os = this.jugador.getConexion().getOutputStream();
 		
 			while(true) {
 				
 				
+				if(this.rule.anadirApuesta(this.crearApuesta(this.jugador.getConexion().getInputStream(),os))) {
+					
+					os.write("Apuesta añadida con exito".getBytes());
+					os.write("\r\n".getBytes());
+					os.flush();
+					
+				}else {
+					
+					os.write("No se ha podido añadir la apuesta. Lo sentimos.".getBytes());
+					os.write("\r\n".getBytes());
+					os.flush();
+				}
 				
-				this.rule.anadirApuesta(this.crearApuesta(jugador, bff));
+				
 				
 			}
 			
@@ -31,9 +58,7 @@ public class CrearApuestas implements Runnable {
 			
 			
 			
-		}catch(IOException e) {e.printStackTrace();
-		
-		}
+		}catch(IOException e) {e.printStackTrace();}
 		
 		
 		
@@ -41,55 +66,80 @@ public class CrearApuestas implements Runnable {
 	}
 	
 	
-	// Método estático para crear la apuesta
-    public  Apuesta crearApuesta(Jugador jugador, BufferedReader bff) {
+	
+    public  Apuesta crearApuesta(InputStream is, OutputStream os) {
         
-        System.out.println("\n--- NUEVA APUESTA ---");
-        System.out.println("Saldo actual: " + jugador.getSaldo() + "€");
+        
 
         try {
+        	
+        	BufferedReader bis = new BufferedReader(new InputStreamReader(is));
+        	
+        	os.write("\n--- NUEVA APUESTA ---".getBytes());
+			os.write("\r\n".getBytes());
+            os.write(("Saldo actual: " + jugador.getSaldo() + "€").getBytes());
+			os.write("\r\n".getBytes());
+            
+        	
             // 1. PEDIR CANTIDAD (Validando saldo)
             double cantidad = 5;
             boolean cantidadValida = false;
             
             while (!cantidadValida) {
-                System.out.print("¿Cuánto quieres apostar? ");
+                os.write("¿Cuánto quieres apostar? ".getBytes());
+				os.write("\r\n".getBytes());
+
                 try {
-                    String entrada = bff.readLine();
+                	os.flush();
+                    String entrada = bis.readLine();
                     cantidad = Double.parseDouble(entrada);
                     
                     if (cantidad < 5) {
-                        System.out.println("❌ La cantidad debe ser mayor a 5.");
+                        os.write("❌ La cantidad debe ser mayor a 5.".getBytes());
+    					os.write("\r\n".getBytes());
+
                     } else if (cantidad > jugador.getSaldo()) {
-                        System.out.println("❌ No tienes suficiente saldo (Tienes: " + jugador.getSaldo() + ")");
+                        os.write(("❌ No tienes suficiente saldo (Tienes: " + jugador.getSaldo() + ")").getBytes());
+    					os.write("\r\n".getBytes());
+
                     } else {
                         cantidadValida = true;
                     }
                 } catch (NumberFormatException e) {
-                    System.out.println("❌ Introduce un número válido (ej: 10.5).");
+                    os.write("❌ Introduce un número válido (ej: 10.5).".getBytes());
+					os.write("\r\n".getBytes());
+
                 }
             }
 
             // 2. PEDIR TIPO DE APUESTA
-            System.out.println("¿Qué tipo de apuesta quieres hacer?");
-            System.out.println("1- NUMERO (Pleno)");
-            System.out.println("2- COLOR");
-            System.out.println("3- PAR / IMPAR");
-            System.out.println("4- DOCENA");
+            os.write("¿Qué tipo de apuesta quieres hacer?".getBytes());
+			os.write("\r\n".getBytes());
+            os.write("1- NUMERO (Pleno)".getBytes());
+            os.write("\r\n".getBytes());
+            os.write("2- COLOR".getBytes());
+            os.write("\r\n".getBytes());
+            os.write("3- PAR / IMPAR".getBytes());
+            os.write("\r\n".getBytes());
+            os.write("4- DOCENA".getBytes());
+            os.write("\r\n".getBytes());
             
             TipoApuesta tipoSeleccionado = null;
             while (tipoSeleccionado == null) {
                 try {
-                    String s = bff.readLine();
+                	os.flush();
+                    String s = bis.readLine();
                     int op = Integer.parseInt(s);
                     // Asumiendo que tu Enum tiene este orden
                     if (op >= 1 && op <= 4) {
                         tipoSeleccionado = TipoApuesta.values()[op - 1];
                     } else {
-                        System.out.println("❌ Elige entre 1 y 4.");
+                        os.write("❌ Elige entre 1 y 4.".getBytes());
+                        os.write("\r\n".getBytes());
                     }
                 } catch (NumberFormatException e) {
-                    System.out.println("❌ Introduce un número.");
+                    os.write("❌ Introduce un número.".getBytes());
+                    os.write("\r\n".getBytes());
                 }
             }
 
@@ -100,41 +150,52 @@ public class CrearApuestas implements Runnable {
             while (!valorValido) {
                 switch (tipoSeleccionado) {
                     case NUMERO:
-                        System.out.print("Elige número (0-36): ");
+                        os.write("Elige número (0-36): ".getBytes());
+                        os.write("\r\n".getBytes());
                         try {
-                            int num = Integer.parseInt(bff.readLine());
+                        	os.flush()
+                            int num = Integer.parseInt(bis.readLine());
                             if (num >= 0 && num <= 36) {
                                 valorApostado = String.valueOf(num);
                                 valorValido = true;
-                            } else System.out.println("❌ Número fuera de rango.");
-                        } catch (NumberFormatException e) { System.out.println("❌ Error de formato."); }
+                            } else os.write("❌ Número fuera de rango.".getBytes());
+                            os.write("\r\n".getBytes());
+                        } catch (NumberFormatException e) { os.write("❌ Error de formato.".getBytes());
+                        os.write("\r\n".getBytes());}
                         break;
 
                     case COLOR:
-                        System.out.print("Elige color (ROJO / NEGRO): ");
-                        String color = bff.readLine().toUpperCase().trim();
+                        os.write("Elige color (ROJO / NEGRO): ".getBytes());
+                        os.write("\r\n".getBytes());
+                        
+                        String color = bis.readLine().toUpperCase().trim();
                         if (color.equals("ROJO") || color.equals("NEGRO")) {
                             valorApostado = color;
                             valorValido = true;
-                        } else System.out.println("❌ Escribe ROJO o NEGRO.");
+                        } else os.write("❌ Escribe ROJO o NEGRO.".getBytes());
+                        	os.write("\r\n".getBytes());
                         break;
 
                     case PAR_IMPAR:
-                        System.out.print("Elige paridad (PAR / IMPAR): ");
-                        String paridad = bff.readLine().toUpperCase().trim();
+                        os.write("Elige paridad (PAR / IMPAR): ".getBytes());
+                        os.write("\r\n".getBytes());
+                        os.flush()
+                        String paridad = bis.readLine().toUpperCase().trim();
                         if (paridad.equals("PAR") || paridad.equals("IMPAR")) {
                             valorApostado = paridad;
                             valorValido = true;
-                        } else System.out.println("❌ Escribe PAR o IMPAR.");
+                        } else os.write("❌ Escribe PAR o IMPAR.".getBytes());os.write("\r\n".getBytes());
                         break;
 
                     case DOCENA:
-                        System.out.print("Elige docena (1, 2 o 3): ");
-                        String docena = bff.readLine().trim();
+                        os.write("Elige docena (1, 2 o 3): ".getBytes());
+                        os.write("\r\n".getBytes());
+                        os.flush();
+                        String docena = bis.readLine().trim();
                         if (docena.equals("1") || docena.equals("2") || docena.equals("3")) {
                             valorApostado = docena;
                             valorValido = true;
-                        } else System.out.println("❌ Escribe 1, 2 o 3.");
+                        } else os.write("❌ Escribe 1, 2 o 3.".getBytes());os.write("\r\n".getBytes());
                         break;
                 }
             }
