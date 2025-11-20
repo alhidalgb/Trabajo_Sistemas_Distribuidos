@@ -13,10 +13,12 @@ public class ServidorRuleta {
 
 	public static List<Socket> clientesConectados = Collections.synchronizedList(new ArrayList<>());
 	
+	public static List<Jugador> jugadores = Collections.synchronizedList(new ArrayList<>());
+	
 	
 	public void IniciarServidor(int puerto) {
 		
-		
+		ServicioRuleta rule = new ServicioRuleta();
 		
 		try(ServerSocket server = new ServerSocket(puerto);
 			ExecutorService pool = Executors.newCachedThreadPool();
@@ -26,7 +28,7 @@ public class ServidorRuleta {
 	        
 	        // Programamos la tarea "RondaDeJuego" para que ocurra cada 30 segundos
 	        // Parametros: Tarea, retardo inicial, periodo, unidad de tiempo
-	        scheduler.scheduleAtFixedRate(new GiraPelotita(clientesConectados), 0, 30, TimeUnit.SECONDS);
+	        scheduler.scheduleAtFixedRate(new GiraPelotita(clientesConectados,rule), 0, 30, TimeUnit.SECONDS);
 			
 			
 			

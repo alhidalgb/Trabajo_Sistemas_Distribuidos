@@ -45,6 +45,14 @@ public class Casilla implements Serializable{
 
 	public int getDocena() {
 		// TODO Auto-generated method stub
+		
+		if(this.numero>=1 && this.numero<=12) {return 1;}
+		if(this.numero>=13 && this.numero<=24) {return 2;}
+		if(this.numero>=25 && this.numero<=36) {return 3;}
+
+
+		
+		
 		return 0;
 	}
 	
