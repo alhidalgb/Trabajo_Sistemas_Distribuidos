@@ -19,8 +19,6 @@ public class ServicioRuletaServidor {
 	
 	//Lista con todos los jugadores iniciados sesion.
 	private List<Jugador> jugadores;
-	
-	//Los jugadores que han hecho apuestas.
 	private Map<Jugador,List<Apuesta>> jugadorApuestas;
 	
 	

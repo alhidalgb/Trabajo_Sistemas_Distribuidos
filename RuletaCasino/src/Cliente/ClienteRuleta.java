@@ -6,14 +6,19 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 
-public class Cliente {
+public class ClienteRuleta {
 
 	
 	Socket cliente;
 	
-	public Cliente(Socket cliente) {
+	public ClienteRuleta(int puerto) {
 		
-		this.cliente=cliente;
+		try {
+			this.cliente= new Socket("LOCALHOST",puerto);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		
 	}
@@ -30,11 +35,21 @@ public class Cliente {
 			
 			while(true) {
 				
+												
+				String msgServidor = bis.readLine();
 				
-				System.out.println(bis.readLine());
-				os.write((bff.readLine()+"\r\n").getBytes());
-				os.flush();
+				if(msgServidor.equals("NECESITO RESPUESTA\r\n")) {
+										
+					os.write((bff.readLine()+"\r\n").getBytes());
+					os.flush();
+					
+				}else {
+					
+					System.out.println(msgServidor);
+					
+				}
 				
+									
 				
 			}
 			

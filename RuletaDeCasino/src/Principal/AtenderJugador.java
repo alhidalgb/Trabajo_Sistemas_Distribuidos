@@ -3,6 +3,7 @@ package Principal;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -50,15 +51,16 @@ public class AtenderJugador implements Runnable{
 				OutputStream os = cliente.getOutputStream()){
 			
 			BufferedReader bis= new BufferedReader(new InputStreamReader(is));
+			DataOutputStream dos = new DataOutputStream(os);
 
 			
-			os.write("¿Que quieres hacer?".getBytes());
-			os.write("\r\n".getBytes());
-			os.write("1-Iniciar sesion:".getBytes());
-			os.write("\r\n".getBytes());
-			os.write("2-Registrar sesion:".getBytes());
-			os.write("\r\n".getBytes());
-			os.flush();
+			dos.writeBytes("¿Que quieres hacer?");
+			dos.writeBytes("\r\n");
+			dos.writeBytes("1-Iniciar sesion:");
+			dos.writeBytes("\r\n");
+			dos.writeBytes("2-Registrar sesion:");
+			dos.writeBytes("\r\n");
+			dos.flush();
 			
 			String i = bis.readLine();
 			
@@ -89,13 +91,13 @@ public class AtenderJugador implements Runnable{
 				
 			}else {
 				
-				os.write("-ERROR-".getBytes());
-				os.write("\r\n".getBytes());
-				os.write("Ha ocurrido un error en inicio de sesion, intentelo mas tarde.".getBytes());
-				os.write("\r\n".getBytes());
-				os.write("Disculpa las molestias".getBytes());
-				os.write("\r\n".getBytes());				
-				os.flush();
+				dos.writeBytes("-ERROR-");
+				dos.writeBytes("\r\n");
+				dos.writeBytes("Ha ocurrido un error en inicio de sesion, intentelo mas tarde.");
+				dos.writeBytes("\r\n");
+				dos.writeBytes("Disculpa las molestias");
+				dos.writeBytes("\r\n");				
+				dos.flush();
 				
 				
 				
@@ -164,15 +166,16 @@ public class AtenderJugador implements Runnable{
 		try{
 			
 			BufferedReader bis= new BufferedReader(new InputStreamReader(is));
+			DataOutputStream dos = new DataOutputStream(os);
 			
-			os.write("---INICIANDO SESION---".getBytes());
-			os.write("\r\n".getBytes());
-			os.write("Nombre de usuario:".getBytes());
-			os.write("\r\n".getBytes());
-			os.flush();
+			dos.writeBytes("---INICIANDO SESION---");
+			dos.writeBytes("\r\n");
+			dos.writeBytes("Nombre de usuario:");
+			dos.writeBytes("\r\n");
+			dos.flush();
 			
-			os.write("NECESITO RESPUESTA\r\n".getBytes());				
-			os.flush();
+			dos.writeBytes("NECESITO RESPUESTA\r\n");				
+			dos.flush();
 			
 			String ID=bis.readLine();
 			
@@ -181,12 +184,12 @@ public class AtenderJugador implements Runnable{
 			if(jugador.equals(null)) {
 				
 				
-				os.write("Nombre de usuario no encontrado, ¿Quieres registrar sesion?".getBytes());
-				os.write("\r\n".getBytes());
-				os.flush();
+				dos.writeBytes("Nombre de usuario no encontrado, ¿Quieres registrar sesion?");
+				dos.writeBytes("\r\n");
+				dos.flush();
 				
-				os.write("NECESITO RESPUESTA\r\n".getBytes());				
-				os.flush();
+				dos.writeBytes("NECESITO RESPUESTA\r\n");				
+				dos.flush();
 				String n = bis.readLine();
 				
 				if(n.equals("si")) {
@@ -226,11 +229,12 @@ public class AtenderJugador implements Runnable{
 		try{
 			
 			BufferedReader bis= new BufferedReader(new InputStreamReader((is)));
-			
-			os.write("---REGISTRANDO SESION---".getBytes());
-			os.write("\r\n".getBytes());
-			os.write("Nombre de usuario:".getBytes());
-			os.flush();
+			DataOutputStream dos = new DataOutputStream(os);
+
+			dos.writeBytes("---REGISTRANDO SESION---");
+			dos.writeBytes("\r\n");
+			dos.writeBytes("Nombre de usuario:");
+			dos.flush();
 			
 			
 			//Si por algun casual no funciona bien el asignamiento de nombre de usuario, nos aseguramos de que ponemos uno que no se va repetir
@@ -240,8 +244,8 @@ public class AtenderJugador implements Runnable{
 			while(true) {
 				
 				
-				os.write("NECESITO RESPUESTA\r\n".getBytes());				
-				os.flush();
+				dos.writeBytes("NECESITO RESPUESTA\r\n");				
+				dos.flush();
 				ID = bis.readLine();
 				
 				if(this.rule.getJugador(ID)==null) {
@@ -251,8 +255,8 @@ public class AtenderJugador implements Runnable{
 					
 				}
 				
-				os.write("Nombre de usuario en uso, prueba otra vez.".getBytes());
-				os.flush();
+				dos.writeBytes("Nombre de usuario en uso, prueba otra vez.");
+				dos.flush();
 				
 			}
 			
@@ -261,8 +265,8 @@ public class AtenderJugador implements Runnable{
 			
 			
 			
-			os.write("Saldo a introducir:".getBytes());
-			os.flush();
+			dos.writeBytes("Saldo a introducir:");
+			dos.flush();
 				
 			//Nos aseguramos de que introduca un valor valido.
 			boolean correcto=true;
@@ -271,15 +275,15 @@ public class AtenderJugador implements Runnable{
 				
 				try {
 					
-					os.write("NECESITO RESPUESTA\r\n".getBytes());				
-					os.flush();
+					dos.writeBytes("NECESITO RESPUESTA\r\n");				
+					dos.flush();
 					String sal = bis.readLine();
 					saldo = Double.parseDouble(sal);
 					correcto=false;
 					
 				}catch (NumberFormatException e) {
-					os.write("Introduce un valor valido:".getBytes());
-					os.flush();
+					dos.writeBytes("Introduce un valor valido:");
+					dos.flush();
 				}
 			}
 			
@@ -297,7 +301,7 @@ public class AtenderJugador implements Runnable{
 			
 			case 0:
 				
-				os.write("Tu sabras pero tu usuario esta en uso. Incia Sesion.".getBytes());
+				dos.writeBytes("Tu sabras pero tu usuario esta en uso. Incia Sesion.");
 				return this.iniciarSesion(is,os);
 				
 			case 1:

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<!ELEMENT listapuestas (jugador*)>
+
+<!ATTLIST listapuestas
+  fecha CDATA #REQUIRED
+>
+
+<!ELEMENT jugador (apuesta+)>
+
+<!ATTLIST jugador
+  id ID #REQUIRED
+>
+
+<!ELEMENT apuesta (tipo, valor, cantidad)>
+<!ELEMENT tipo (#PCDATA)>
+<!ELEMENT valor (#PCDATA)>
+<!ELEMENT cantidad (#PCDATA)>

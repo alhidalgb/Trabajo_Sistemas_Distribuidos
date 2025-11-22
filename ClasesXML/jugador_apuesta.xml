@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE listapuestas SYSTEM "jugador_apuesta.dtd">
+
+<!-- Este documento sirve como almacen de todas las apuestas relizadas -->
+
+<listapuestas fecha="2025-11-22">
+    <jugador id="pepe">
+        <apuesta>
+            <tipo>NUMERO</tipo>
+            <valor>7</valor>
+            <cantidad>10.0</cantidad>
+        </apuesta>
+    </jugador>
+    
+    <jugador id="ana">
+        <apuesta>
+            <tipo>COLOR</tipo>
+            <valor>ROJO</valor>
+            <cantidad>50.5</cantidad>
+        </apuesta>
+    </jugador>
+</listapuestas>
