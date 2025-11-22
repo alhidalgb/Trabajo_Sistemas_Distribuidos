@@ -16,18 +16,13 @@ import java.util.*;
 public class ServidorRuleta {
 
 	
-	//Esto sera un archivo xml.
-	
-	public static List<Socket> clientesConectados = Collections.synchronizedList(new ArrayList<>());
-	
-	public static List<Jugador> jugadores = Collections.synchronizedList(new ArrayList<>());
-	
-	
-	
-	
 	public void IniciarServidor(int puerto) {
 		
+		
+		List<Jugador> jugadoresConSesion = null; //Aqui se hace el unmarshalling
+		
 		ServicioRuletaServidor rule = new ServicioRuletaServidor();
+		rule.setListJugadoresSesion(jugadoresConSesion);
 		
 		try(ServerSocket server = new ServerSocket(puerto);
 			ExecutorService pool = Executors.newCachedThreadPool();

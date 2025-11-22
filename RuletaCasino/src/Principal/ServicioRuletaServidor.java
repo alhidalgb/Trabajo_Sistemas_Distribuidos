@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,7 +19,8 @@ public class ServicioRuletaServidor {
 
 	
 	//Lista con todos los jugadores iniciados sesion.
-	private List<Jugador> jugadores;
+	private List<Jugador> jugadoresSesion;
+	
 	
 	//Los jugadores que han hecho apuestas.
 	private Map<Jugador,List<Apuesta>> jugadorApuestas;
@@ -38,12 +40,17 @@ public class ServicioRuletaServidor {
 		this.noVaMas=new CountDownLatch(1);
 		this.VaMas = new CountDownLatch(1);
 		
-		this.jugadores=new ArrayList<>();
+		this.jugadoresSesion=new ArrayList<>();
 		this.jugadorApuestas = new ConcurrentHashMap<>();
 		
 		
 		
 	}
+	
+	//Getters/Setters
+	
+	public List<Jugador> getListJugadoresSesion(){return this.jugadoresSesion;}
+	public void setListJugadoresSesion(List<Jugador> lj) {this.jugadoresSesion= Collections.synchronizedList(lj);}
 	
 	
 	//BLOQUEADOR APUESTAS CADA MARCADO POR EL GIRAR RULETITA
@@ -76,15 +83,41 @@ public class ServicioRuletaServidor {
 	
 	
 	
+	//METODOS USADOS PARA INICIAR/REGISTRAR SESION, (necesario un cuidado con synchronized)
 	
+	
+	public Jugador getJugador(String iD) {
+		
+		
+		//Hacerlo en varios hilos
+		
+		for(Jugador j : this.jugadoresSesion) {
+			
+			if(j.getID().equals(iD)) {
+				
+				return j;
+				
+			}
+			
+			
+		}
+		
+		return null;
+		
+		
+	}
+	
+	
+	
+//Metodo inutil.
 	public int anadirJugador(Jugador jug){
 		
-		if(jugadores.contains(jug)) {		
+		if(jugadoresSesion.contains(jug)) {		
 			
 			return 0;
 		}
 		
-		if(jugadores.add(jug)) {
+		if(jugadoresSesion.add(jug)) {
 			
 			return 1;
 			
@@ -98,9 +131,61 @@ public class ServicioRuletaServidor {
 	public void establecerConexion(Jugador jug, Socket cliente) {
 		
 		jug.setConexion(cliente);		
-		this.jugadores.add(jug);
 		
 	}
+	
+	public Jugador registroSesionDefinitivo(String name,double saldo, Socket cliente) {
+		
+		
+		Jugador jug = null;
+		
+		synchronized (this.jugadoresSesion) {
+			
+			
+			jug = this.getJugador(name);
+			
+			if(jug==null) {
+				
+				jug = new Jugador(name,saldo);
+				this.establecerConexion(jug, cliente);
+				this.jugadoresSesion.add(jug);
+				return jug;
+				
+			}else {return null;}
+				   
+		}
+		
+		
+		
+		
+	}
+	
+	public Jugador inicioSesionDefinitivo(String name, Socket cliente) {
+		
+		Jugador jug = null;
+		
+		synchronized (this.jugadoresSesion) {
+			
+			
+			jug = this.getJugador(name);
+			
+			if(jug!=null) {
+				
+				this.establecerConexion(jug, cliente);
+				
+			}
+				   
+		}
+		
+		
+		
+		return jug;
+	
+		
+	}
+	
+	
+	//--------------------------------------------------------------
 	
 	
 	public boolean anadirApuesta(Apuesta apuesta) {
@@ -133,10 +218,7 @@ public class ServicioRuletaServidor {
 	}
 
 
-	public Jugador getJugador(String iD) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
 	
 	
 	

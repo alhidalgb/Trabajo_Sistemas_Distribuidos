@@ -1,23 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE historial SYSTEM "historial.dtd">
 
-<!DOCTYPE listapuestas SYSTEM "jugador_apuesta.dtd">
+<historial>
+    <listapuestas fecha="2025-11-22">
+        <jugador id="pepe">
+            <apuesta tipo="NUMERO" valor="7" cantidad="10.0">Apuesta de la suerte</apuesta>
+        </jugador>
+        
+        <jugador id="ana">
+            <apuesta tipo="COLOR" valor="ROJO" cantidad="50.5"></apuesta>
+        </jugador>
+    </listapuestas>
 
-<!-- Este documento sirve como almacen de todas las apuestas relizadas -->
-
-<listapuestas fecha="2025-11-22">
-    <jugador id="pepe">
-        <apuesta>
-            <tipo>NUMERO</tipo>
-            <valor>7</valor>
-            <cantidad>10.0</cantidad>
-        </apuesta>
-    </jugador>
-    
-    <jugador id="ana">
-        <apuesta>
-            <tipo>COLOR</tipo>
-            <valor>ROJO</valor>
-            <cantidad>50.5</cantidad>
-        </apuesta>
-    </jugador>
-</listapuestas>
+    <listapuestas fecha="2025-11-23">
+        <jugador id="pepe">
+            <apuesta tipo="PAR_IMPAR" valor="PAR" cantidad="20.0">Recuperando pérdidas</apuesta>
+        </jugador>
+    </listapuestas>
+</historial>

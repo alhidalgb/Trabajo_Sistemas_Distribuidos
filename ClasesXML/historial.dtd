@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!ELEMENT historial (listapuestas*)>
+<!ELEMENT listapuestas (jugador*)>
+
+<!ATTLIST listapuestas
+  fecha CDATA #REQUIRED
+>
+
+<!ELEMENT jugador (apuesta+)>
+
+<!ATTLIST jugador
+  id CDATA #REQUIRED
+>
+
+<!ELEMENT apuesta (#PCDATA)>
+
+<!ATTLIST apuesta
+  tipo (NUMERO|COLOR|PAR_IMPAR) #REQUIRED
+  valor CDATA #REQUIRED
+  cantidad CDATA #REQUIRED
+>
+
