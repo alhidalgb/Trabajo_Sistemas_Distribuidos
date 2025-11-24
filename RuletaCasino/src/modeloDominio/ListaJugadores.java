@@ -1,4 +1,4 @@
-package ModeloDominio;
+package modeloDominio;
 
 public class ListaJugadores {
 

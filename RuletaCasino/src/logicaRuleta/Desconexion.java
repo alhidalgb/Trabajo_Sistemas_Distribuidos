@@ -1,4 +1,4 @@
-package Principal;
+package logicaRuleta;
 
 public class Desconexion {
 

@@ -1,5 +1,6 @@
 package ModeloDominio;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.rmi.UnmarshalException;
@@ -8,14 +9,15 @@ import java.util.List;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.transform.Result;
 
 
-public class CargarJugadores {
+public class BDJugadores {
 	
 	
-	public List<Jugador> cargarJugadores(String nameFile) {
-		
+	public List<Jugador> UnmarshallingJugadores(String nameFile) {
 		
 		
 		
@@ -38,6 +40,22 @@ public class CargarJugadores {
 		
 		
 		
+		
+		
+	}
+	
+	
+	public void MarshallingJugadores(List<Jugador> lj,String nameFile) {
+		
+		
+		try {
+			
+			 JAXBContext context = JAXBContext.newInstance(ListaJugadores.class);
+			 Marshaller m = context.createMarshaller();
+			 m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+			 m.marshal(lj, new File(nameFile));
+			 
+			 } catch (JAXBException e) {e.printStackTrace();}
 		
 		
 	}

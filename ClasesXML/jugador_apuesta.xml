@@ -2,7 +2,7 @@
 <!DOCTYPE historial SYSTEM "historial.dtd">
 
 <historial>
-    <listapuestas fecha="2025-11-22">
+    <listapuestas fecha="2025-11-22" ganadora="0">
         <jugador id="pepe">
             <apuesta tipo="NUMERO" valor="7" cantidad="10.0">Apuesta de la suerte</apuesta>
         </jugador>
@@ -12,7 +12,7 @@
         </jugador>
     </listapuestas>
 
-    <listapuestas fecha="2025-11-23">
+    <listapuestas fecha="2025-11-23" ganadora="6">
         <jugador id="pepe">
             <apuesta tipo="PAR_IMPAR" valor="PAR" cantidad="20.0">Recuperando pérdidas</apuesta>
         </jugador>

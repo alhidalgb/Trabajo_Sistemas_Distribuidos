@@ -1,4 +1,4 @@
-package ModeloDominio;
+package modeloDominio;
 
 import java.io.Serializable;
 
@@ -33,6 +33,10 @@ public class Casilla implements Serializable{
 		
 	}
 
+	
+	//--- GETTERS ---
+	//clase inmutable
+	
 	public int getNumero() {
 		// TODO Auto-generated method stub
 		return numero;

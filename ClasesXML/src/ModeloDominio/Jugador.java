@@ -15,12 +15,18 @@ public class Jugador implements Serializable {
     
     private transient Socket conexion;
 
+    
+    //Es un estado para saber si la sesion esta ya iniciada y no se pueda volver a iniciar sesion desde otro dispositivo.
+  	private transient boolean isSesionIniciada;
+    
     // 1. Constructor vacío 
     public Jugador() {
 		
 		this.conexion=null;
 		this.id=null;
 		this.saldo=0;
+		this.isSesionIniciada=false;
+
 	}
 	
 	public Jugador(String id, double saldo) {
@@ -28,7 +34,6 @@ public class Jugador implements Serializable {
 		this.id=id;
 		this.conexion=null;
 		this.saldo=saldo;
-		
 		
 	}
 	
@@ -54,6 +59,10 @@ public class Jugador implements Serializable {
     @XmlTransient
     public Socket getConexion() {return conexion;}
     public void setConexion(Socket conex) {this.conexion=conex;}
+    
+    @XmlTransient
+    public boolean isSesionIniciada() {return this.isSesionIniciada;}
+	public void setSesionIniciada(boolean is) {this.isSesionIniciada=is;}
     
     
     // Equals para buscarlo fácilmente en la lista

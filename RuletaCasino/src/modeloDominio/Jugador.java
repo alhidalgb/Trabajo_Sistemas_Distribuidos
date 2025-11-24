@@ -1,4 +1,4 @@
-package ModeloDominio;
+package modeloDominio;
 
 import java.net.Socket;
 
@@ -10,6 +10,8 @@ public class Jugador {
 	//Yo los jugadores los voy a guardar como objetos pero no quiero guardar su Socket.
 	private transient Socket conexion;
 	
+	//Es un estado para saber si la sesion esta ya iniciada y no se pueda volver a iniciar sesion desde otro dispositivo.
+	private transient boolean isSesionIniciada;
 	
 	public Jugador() {
 		
@@ -81,5 +83,15 @@ public class Jugador {
 	
 	}
 	
+	
+	public boolean isSesionIniciada() {
+		
+		return this.isSesionIniciada;
+	}
+	
+	public void setSesionIniciada(boolean is) {
+		
+		this.isSesionIniciada=is;
+	}
 	
 }

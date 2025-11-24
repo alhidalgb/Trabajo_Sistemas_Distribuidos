@@ -1,25 +1,26 @@
-package Servidor;
+package servidor;
 
 import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Timer;
 import java.util.concurrent.*;
 
-import ModeloDominio.Jugador;
-import Principal.*;
+import logicaRuleta.*;
+import modeloDominio.Jugador;
 
 import java.util.*;
+
 
 public class ServidorRuleta {
 
 	
-	public void IniciarServidor(int puerto) {
+	public void IniciarServidor(int puerto, String historial, String bd) {
 		
 		
-		List<Jugador> jugadoresConSesion = null; //Aqui se hace el unmarshalling
+		
+		XMLServidor xml = new XMLServidor(historial);
+		
+		List<Jugador> jugadoresConSesion = BDJugadores.UnmarshallingJugadores(bd); //Aqui se hace el unmarshalling
 		
 		ServicioRuletaServidor rule = new ServicioRuletaServidor();
 		rule.setListJugadoresSesion(jugadoresConSesion);
@@ -32,7 +33,7 @@ public class ServidorRuleta {
 	        
 	        // Programamos la tarea "RondaDeJuego" para que ocurra cada 30 segundos
 	        // Parametros: Tarea, retardo inicial, periodo, unidad de tiempo
-	        scheduler.scheduleAtFixedRate(new GiraPelotita(rule), 0, 30, TimeUnit.SECONDS);
+	        scheduler.scheduleAtFixedRate(new GiraPelotita(rule,pool,xml), 0, 30, TimeUnit.SECONDS);
 			
 			
 			
@@ -63,6 +64,11 @@ public class ServidorRuleta {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		finally {
+			
+			BDJugadores.MarshallingJugadores(jugadoresConSesion, bd);
+			
 		}
 		
 		

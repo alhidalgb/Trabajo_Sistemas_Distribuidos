@@ -1,4 +1,4 @@
-package Principal;
+package logicaRuleta;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -6,19 +6,21 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
-import ModeloDominio.Apuesta;
-import ModeloDominio.Casilla;
-import ModeloDominio.Jugador;
+import modeloDominio.Apuesta;
+import modeloDominio.Casilla;
+import modeloDominio.Jugador;
 
 public class ServicioRuletaServidor {
 
 	
-	//Lista con todos los jugadores iniciados sesion.
+	//Lista con todos los jugadores iniciados sesion. Yo cargo esta lista y mientras el servidor siga vivo esta sigue funcionando.
+	//Cuando el servidor se desconecte hara todos los cambios necesarios en la BD (archivo xml).
 	private List<Jugador> jugadoresSesion;
 	
 	
@@ -52,6 +54,29 @@ public class ServicioRuletaServidor {
 	public List<Jugador> getListJugadoresSesion(){return this.jugadoresSesion;}
 	public void setListJugadoresSesion(List<Jugador> lj) {this.jugadoresSesion= Collections.synchronizedList(lj);}
 	
+	public Map<Jugador,List<Apuesta>> getJugadorApuestas(){return this.jugadorApuestas;}
+	public void setJugadorApuestas(Map<Jugador,List<Apuesta>> m) {this.jugadorApuestas=m;}
+	
+	public Map<Jugador, List<Apuesta>> getCopiaJugadorApuestas( ) {
+	    Map<Jugador, List<Apuesta>> copia = new HashMap<>();
+
+	    // Recorremos el mapa original (thread-safe gracias a ConcurrentHashMap)
+	    for (Map.Entry<Jugador, List<Apuesta>> entry : this.jugadorApuestas.entrySet()) {
+	        
+	        Jugador jugador = entry.getKey();
+	        List<Apuesta> listaOriginal = entry.getValue();
+	        
+	        // IMPORTANTE: Si la lista original es una synchronizedList (como sugerí antes),
+	        // debes sincronizar para copiarla atómicamente y evitar errores.
+	        synchronized (listaOriginal) {
+	        	
+	            // Creamos una NUEVA ArrayList con los contenidos de la vieja
+	            copia.put(new Jugador(jugador.getID(),jugador.getSaldo()), new ArrayList<>(listaOriginal));
+	        }
+	    }
+
+	    return copia;
+	}
 	
 	//BLOQUEADOR APUESTAS CADA MARCADO POR EL GIRAR RULETITA
 
@@ -130,9 +155,33 @@ public class ServicioRuletaServidor {
 	
 	public void establecerConexion(Jugador jug, Socket cliente) {
 		
-		jug.setConexion(cliente);		
+		
+		if(!jug.isSesionIniciada()) { 
+			
+			jug.setSesionIniciada(true);
+			jug.setConexion(cliente);
+			
+		}else {
+			
+			jug=null;
+			
+			try {
+				OutputStream os = cliente.getOutputStream();
+				os.write("El usuario ya ha iniciado sesion".getBytes());
+				os.write("\r\n".getBytes());
+				os.flush();
+			}catch(IOException e) {
+				
+				//Propagar excepcion??
+				
+			}
+			
+		}
+				
 		
 	}
+	
+
 	
 	public Jugador registroSesionDefinitivo(String name,double saldo, Socket cliente) {
 		
@@ -190,6 +239,15 @@ public class ServicioRuletaServidor {
 	
 	public boolean anadirApuesta(Apuesta apuesta) {
 		
+		
+		List<Apuesta> listaDelJugador = 
+				this.jugadorApuestas.computeIfAbsent(apuesta.getJugador(), k -> Collections.synchronizedList(new ArrayList<>()));
+
+		    // 3. Añadimos a la lista (ahora es seguro hacerlo desde varios hilos)
+		    return listaDelJugador.add(apuesta);
+		    
+		    
+		/*
 		if(this.jugadorApuestas.get(apuesta.getJugador())==null) {
 			
 			List<Apuesta> t = new ArrayList<>();
@@ -213,15 +271,14 @@ public class ServicioRuletaServidor {
 			
 		}
 		
+		/*/
 		
 		
 	}
 
 
 	
-	
-	
-	
+
 	public void repartirPremio(Casilla ganadora) {
 		
 	
@@ -249,7 +306,7 @@ public class ServicioRuletaServidor {
 			}
 			
 			
-			//Almacenar ganancia apuesta en la BD y mandar al cliente.
+			
 					
 				os.write(("HAS GANADO: " + ganancia + "€").getBytes());
 				os.flush();
@@ -261,7 +318,8 @@ public class ServicioRuletaServidor {
 			}finally {
 				
 				
-				//Añadir a la base de datos
+				this.jugadorApuestas.clear();
+				
 				
 			}
 			

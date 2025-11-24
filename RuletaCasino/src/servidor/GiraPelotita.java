@@ -1,26 +1,26 @@
-package Principal;
+package servidor;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.util.List;
-import java.util.Map;
+
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import ModeloDominio.Casilla;
+import logicaRuleta.ServicioRuletaServidor;
+import modeloDominio.Casilla;
 
 
 public class GiraPelotita implements Runnable {
 
 	private ServicioRuletaServidor rule;
+	private ExecutorService pool;
+	private XMLServidor xml;
 	
-	//SOLO LE PASA EL SERVICIORULETA Y CADA X SEGUNDOS HACE LAS COSAS.
-	public GiraPelotita(ServicioRuletaServidor rule) {
+	
+	public GiraPelotita(ServicioRuletaServidor rule, ExecutorService pool, XMLServidor xml) {
 		
 		this.rule=rule;
+		this.pool=pool;
+		this.xml=xml;
 	}
 	
 	@Override
@@ -42,7 +42,10 @@ public class GiraPelotita implements Runnable {
 		    e.printStackTrace();
 		}
 		
-		this.rule.repartirPremio(new Casilla(numeroGanador));
+		Casilla ganadora=new Casilla(numeroGanador);
+		
+		pool.execute(new guardarApuestas(this.rule.getCopiaJugadorApuestas(),ganadora,xml) );
+		this.rule.repartirPremio(ganadora);
 		this.rule.resetNoVaMas();
 		
 	}

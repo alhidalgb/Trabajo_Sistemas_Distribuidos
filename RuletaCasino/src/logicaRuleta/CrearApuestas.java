@@ -1,4 +1,4 @@
-package Principal;
+package logicaRuleta;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -6,9 +6,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 
-import ModeloDominio.Apuesta;
-import ModeloDominio.Jugador;
-import ModeloDominio.TipoApuesta;
+import modeloDominio.Apuesta;
+import modeloDominio.Jugador;
+import modeloDominio.TipoApuesta;
 
 public class CrearApuestas extends Thread {
 
@@ -58,7 +58,9 @@ public class CrearApuestas extends Thread {
 			
 			
 			
-		}catch(IOException e) {e.printStackTrace();}
+		}catch(IOException e) {
+			e.printStackTrace();
+		}
 		
 		
 		
@@ -67,12 +69,10 @@ public class CrearApuestas extends Thread {
 	
 	
 	
-    public  Apuesta crearApuesta(InputStream is, OutputStream os) {
+    public  Apuesta crearApuesta(InputStream is, OutputStream os) throws IOException {
         
         
-
-        try {
-        	
+   	
         	BufferedReader bis = new BufferedReader(new InputStreamReader(is));
         	
         	os.write("\n--- NUEVA APUESTA ---".getBytes());
@@ -222,10 +222,7 @@ public class CrearApuestas extends Thread {
             // Usamos el ID del jugador que pasamos por parámetro
             return new Apuesta(jugador, tipoSeleccionado, valorApostado, cantidad);
 
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
+       
     }
 	
 	

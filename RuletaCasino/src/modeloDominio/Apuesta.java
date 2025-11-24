@@ -1,19 +1,18 @@
-package ModeloDominio;
+package modeloDominio;
 
+import java.io.Reader;
 import java.io.Serializable;
 
-public class Apuesta implements Serializable {
+public class Apuesta  {
 
-	private static final long serialVersionUID = 1L; // Recomendado para Serializable
+	
 
 	private Jugador jugador; 
 	private TipoApuesta tipo;
 	private String valor;
 	private double cantidad;
 	
-	// 1. Constructor Vacío (OBLIGATORIO para JAXB)
-	public Apuesta() {
-	}
+	
 	
 	// 2. Constructor con parámetros
 	public Apuesta(Jugador j, TipoApuesta t, String v, double cantidad) {
@@ -23,37 +22,52 @@ public class Apuesta implements Serializable {
 		this.cantidad = cantidad; 
 	}
 	
-	// --- GETTERS Y SETTERS ---
-
+	
+	//--- GETTERS ---
 	public Jugador getJugador() {
 		return jugador;
 	}
+	
+	public TipoApuesta getTipo() { 
+		return tipo;
+	}
+	
+	public String getValor() {
+		return valor;
+	}
+	
+	public double getCantidad() {
+		return cantidad;
+	}
+	
+	
+	// --- SETTERS ---
+
+	//Una vez creada esta clase es inmutable.
+	
+	/*
 
 	public void setJugador(Jugador jugador) {
 		this.jugador = jugador;
 	}
 
-	public TipoApuesta getTipo() { 
-		return tipo;
-	}
+	
 
 	public void setTipo(TipoApuesta tipo) {
 		this.tipo = tipo;
 	}
 
-	public String getValor() {
-		return valor;
-	}
+	
 
 	public void setValor(String valor) {
 		this.valor = valor;
 	}
 
-	public double getCantidad() {
-		return cantidad;
-	}
+	
 
 	public void setCantidad(double cantidad) {
 		this.cantidad = cantidad;
 	}
+	
+	*/
 }

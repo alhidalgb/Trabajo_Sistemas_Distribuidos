@@ -1,4 +1,4 @@
-package Servidor;
+package servidor;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,33 +20,43 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
-import ModeloDominio.Apuesta;
-import ModeloDominio.Jugador;
+import modeloDominio.Apuesta;
+import modeloDominio.Casilla;
+import modeloDominio.Jugador;
 
-public class XMLJugadores {
+public class XMLServidor {
 	
 	
-	private File file;
 	
-	public XMLJugadores(String nameFile) {this.file=new File(nameFile);}
+	//Tengo que estar todo el rato cerrandole y abriendolo??
 	
-	
-	public void cargarJugadores(String nameFile) {
+	private  File file;
+	public XMLServidor(String nameFile) {
 		
 		
-		
-		
-			
-		
-	}
+		File fichero = new File(nameFile);
+
+	    if (!fichero.exists() && !fichero.isFile()) {
+	        // 1. Aseguramos que el directorio padre exista
+	        File carpetaPadre = fichero.getParentFile();
+	        if (carpetaPadre != null && !carpetaPadre.exists()) {
+	            carpetaPadre.mkdirs(); // Crea todas las carpetas necesarias
+	        }
+
+	        // 2. Creamos el fichero vacío
+	        try {
+				fichero.createNewFile();
+			} catch (IOException e) {
+				
+				fichero = new File(nameFile);
+			}
+	    }
+
+	    this.file = fichero;}
 	
-	public void descargarJugadores() {
-		
-	}
 	
 	
-	
-	public void guardarJugadorApuesta(Map<Jugador,List<Apuesta>> map) {
+	public void guardarJugadorApuesta(Map<Jugador,List<Apuesta>> map, Casilla ganador) {
 		
 		
 		try {
@@ -61,6 +71,7 @@ public class XMLJugadores {
 			
 			Element listapuestas = doc.createElement("listapuestas");
 			listapuestas.setAttribute("fecha", fechaHoraActual.toString());
+			listapuestas.setAttribute("ganadora", Integer.toString(ganador.getNumero()));
 			
 			//Todo el map esta dentro de lista apuestas
 			for (Entry<Jugador, List<Apuesta>> entrada : map.entrySet()) {
@@ -112,11 +123,8 @@ public class XMLJugadores {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
-		
-	}
-	
-	
 
+	
+	
+	}
 }
