@@ -29,7 +29,7 @@ public class ServidorRuleta {
         try (ServerSocket server = new ServerSocket(puerto)) {
             // Crupier automático cada 20 segundos
             scheduler.scheduleWithFixedDelay(new GiraPelotita(rule, pool, xml), 10, 20, TimeUnit.SECONDS);
-            scheduler.scheduleAtFixedRate(new , 3, 3, TimeUnit.HOURS);
+            scheduler.scheduleAtFixedRate(new ActualizarBD(new ArrayList<>(jugadoresConSesion),bd) , 3, 3, TimeUnit.HOURS);
             
             
             while (!server.isClosed()) {

@@ -20,11 +20,18 @@ public class BDJugadores {
         try {
             JAXBContext context = JAXBContext.newInstance(ListaJugadores.class);
             Unmarshaller um = context.createUnmarshaller();
+            
+            //SUPER IMPORTANTE, sino no hace el Unmarshaller
+            um.setSchema(null); // Ignora validación contra DTD
+            
             FileReader file = new FileReader(nameFile);
             ListaJugadores listJugadores = (ListaJugadores) um.unmarshal(file);
             return listJugadores.getLista();
-        } catch (JAXBException | FileNotFoundException e) {
+        } catch (JAXBException e) {
             System.err.println("⚠️ Error unmarshalling jugadores: " + e.getMessage());
+            return new ArrayList<>();
+        }catch(FileNotFoundException e) {
+        	System.err.println("⚠️ Error unmarshalling jugadoress: " + e.getMessage());
             return new ArrayList<>();
         }
     }

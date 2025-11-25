@@ -87,14 +87,16 @@ public class XMLServidor {
 
             for (Entry<Jugador, List<Apuesta>> entrada : map.entrySet()) {
                 Element jugador = doc.createElement("jugador");
-                jugador.setIdAttribute("id", true);
+                //jugador.setIdAttribute("id", true);
                 jugador.setAttribute("id", entrada.getKey().getID());
 
                 for (Apuesta ap : entrada.getValue()) {
+                	
                     Element apuesta = doc.createElement("apuesta");
                     apuesta.setAttribute("tipo", ap.getTipo().toString());
                     apuesta.setAttribute("valor", ap.getValor());
                     apuesta.setAttribute("cantidad", Double.toString(ap.getCantidad()));
+                    
                     jugador.appendChild(apuesta);
                 }
                 listapuestas.appendChild(jugador);
@@ -104,6 +106,10 @@ public class XMLServidor {
 
             TransformerFactory tf = TransformerFactory.newInstance();
             Transformer t = tf.newTransformer();
+            // Activar formato bonito (pretty print)
+            t.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
+            t.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4"); // número de espacios de sangría
+            
             t.transform(new DOMSource(doc), new StreamResult(file));
 
         } catch (IOException e) {
