@@ -10,48 +10,78 @@ import java.util.concurrent.CyclicBarrier;
 
 import modeloDominio.Apuesta;
 import modeloDominio.Casilla;
+import modeloDominio.Jugador;
 
 public class MandarPremios implements Runnable{
 
-	private PrintWriter os;
 	private List<Apuesta> listApuesta;
 	private Casilla ganadora;
 	private CyclicBarrier starter;
+	private Jugador jugador;
 	
-	public MandarPremios(OutputStream os, List<Apuesta> listApuesta, Casilla ganadora,CyclicBarrier starter) {
+	public MandarPremios(Jugador jug, List<Apuesta> listApuesta, Casilla ganadora,CyclicBarrier starter) {
 		
-		this.os = new PrintWriter(new OutputStreamWriter(os));
 		this.ganadora=ganadora;
 		this.listApuesta=listApuesta;
 		this.starter=starter;
+		this.jugador=jug;
 		
 	}
 	
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
-		double ganancia = 0.0;
+		double ganancia = 0.0;	
+		PrintWriter os=null;
 		
+		
+		
+		//Calculo las ganacias a añadir.
 		for(Apuesta ap:this.listApuesta) {
+					
+			ganancia = this.calcularPremio(ganadora, ap)+ganancia;
+					
+		}
+		
+		//Intento establcer conexion con el jugador.
+		try {
 			
-			ganancia = this.calcularPremio(ganadora, ap);
+			os= new PrintWriter(new OutputStreamWriter(this.jugador.getConexion().getOutputStream()),true);
 			
+		}catch(IOException e) {
+			
+			//Si se ha caido la conexion mientras se repartian los premios, aun asi estos se guardan.
+			os=null;
 			
 		}
 		
-		try {
-			starter.await();
-			this.os.println("HAS GANADO: " +ganancia + "€");
-		} catch (InterruptedException | BrokenBarrierException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}	
-		
 			
+		//Hago que los hilos esperen y si se produce una excepcion no pasa nada, mandamos la gananciai y listo.
+		try {
+			
+			starter.await();
+			
+		}catch(InterruptedException | BrokenBarrierException e){
+			
+		}finally {
+			
+			
+			//Esto quiero que se haga siempre pase lo que pase.
+			
+			
+			
+			jugador.sumarGanancia(ganancia);			
+			if(os!=null) {
+				
+				os.println("CASILLA GANADORA: "+ ganadora.toString());
+				os.println("HAS GANADO: " +ganancia + "€");}	
+			
+		}
 		
 		
+	
 		
-		
+	
 	}
 	
 	public double calcularPremio(Casilla ganadora, Apuesta apuesta) {

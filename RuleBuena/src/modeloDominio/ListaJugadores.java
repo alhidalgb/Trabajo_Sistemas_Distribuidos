@@ -3,7 +3,6 @@ package modeloDominio;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.bind.annotation.*;
-import modeloDominio.Jugador;
 
 @XmlRootElement(name = "jugadores") // La raíz del XML
 public class ListaJugadores {

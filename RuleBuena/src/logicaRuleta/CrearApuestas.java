@@ -33,14 +33,17 @@ public class CrearApuestas extends Thread {
 			// Nota: Es mejor capturar la apuesta y luego añadirla, por si devuelve null o hay error
 			
 			
-			while(true) {
+
+			while (!Thread.currentThread().isInterrupted()) {
 				
+								
 				Apuesta apuestaCreada = this.crearApuesta(in, out);
 				if (apuestaCreada != null && this.rule.anadirApuesta(jugador,apuestaCreada)) {
 					
 					out.println("Apuesta añadida con exito");
 					
 				} else {
+					
 					out.println("No se ha podido añadir la apuesta. Lo sentimos.");
 				}
 				
@@ -48,15 +51,17 @@ public class CrearApuestas extends Thread {
 				
 				out.println("¿Quieres seguir apostando?");
 				out.println("NECESITO RESPUESTA");
-				String msg = in.readLine().toLowerCase();
+				String msg = this.leerSeguro(in);
 				
 				if(!msg.equals("si")) {
 					break;
 				}
 				
-				
+			   
 			}
+
 			
+		
 			
 
 		} catch (IOException e) {
@@ -81,7 +86,11 @@ public class CrearApuestas extends Thread {
 			out.println("NECESITO RESPUESTA"); 
 
 			try {
-				String entrada = in.readLine();
+				
+				//Leer seguro.
+				String entrada=this.leerSeguro(in);
+							
+				
 				if (entrada == null) throw new IOException("Cliente cerró conexión"); // Seguridad básica
 				
 				cantidad = Double.parseDouble(entrada);
@@ -110,7 +119,7 @@ public class CrearApuestas extends Thread {
 		while (tipoSeleccionado == null) {
 			try {
 				out.println("NECESITO RESPUESTA");
-				String s = in.readLine();
+				String s = this.leerSeguro(in);
 				if (s == null) throw new IOException("Cliente cerró conexión");
 				
 				int op = Integer.parseInt(s);
@@ -135,7 +144,7 @@ public class CrearApuestas extends Thread {
 				out.println("Elige número (0-36): ");
 				try {
 					out.println("NECESITO RESPUESTA");
-					String linea = in.readLine();
+					String linea = this.leerSeguro(in);
 					if (linea == null) break; 
 					
 					int num = Integer.parseInt(linea);
@@ -154,7 +163,7 @@ public class CrearApuestas extends Thread {
 				out.println("Elige color (ROJO / NEGRO): ");
 				out.println("NECESITO RESPUESTA");
 				
-				String color = in.readLine();
+				String color = this.leerSeguro(in);
 				if (color != null) {
 					color = color.toUpperCase().trim();
 					if (color.equals("ROJO") || color.equals("NEGRO")) {
@@ -170,7 +179,7 @@ public class CrearApuestas extends Thread {
 				out.println("Elige paridad (PAR / IMPAR): ");
 				out.println("NECESITO RESPUESTA");
 				
-				String paridad = in.readLine();
+				String paridad = this.leerSeguro(in);
 				if (paridad != null) {
 					paridad = paridad.toUpperCase().trim();
 					if (paridad.equals("PAR") || paridad.equals("IMPAR")) {
@@ -186,7 +195,7 @@ public class CrearApuestas extends Thread {
 				out.println("Elige docena (1, 2 o 3): ");
 				out.println("NECESITO RESPUESTA");
 				
-				String docena = in.readLine();
+				String docena = this.leerSeguro(in);
 				if (docena != null) {
 					docena = docena.trim();
 					if (docena.equals("1") || docena.equals("2") || docena.equals("3")) {
@@ -203,4 +212,20 @@ public class CrearApuestas extends Thread {
 		// 4. CONSTRUIR Y DEVOLVER EL OBJETO
 		return new Apuesta(jugador, tipoSeleccionado, valorApostado, cantidad);
 	}
+	
+	
+	public String leerSeguro(BufferedReader in) throws IOException {
+	    // Usar un timeout en el socket o InterruptibleChannel
+	    try {
+	        return in.readLine(); // Simple, se interrumpirá cuando cierres el socket
+	    } catch (IOException e) {
+	        if (Thread.currentThread().isInterrupted() || rule.isNoVaMas()) {
+	            return null;
+	        }
+	        throw e;
+	    }
+	}
+	
+	
+	
 }

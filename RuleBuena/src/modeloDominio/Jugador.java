@@ -1,6 +1,5 @@
 package modeloDominio;
 
-import java.io.Serializable;
 import java.net.Socket;
 
 import javax.xml.bind.annotation.*;
@@ -54,7 +53,7 @@ public class Jugador {
     
     @XmlElement(name = "saldo")
     public double getSaldo() { return saldo; }
-    public void setSaldo(double saldo) { this.saldo = saldo; }
+    public synchronized void setSaldo(double saldo) { this.saldo = saldo; }
     
     @XmlTransient
     public Socket getConexion() {return conexion;}
@@ -65,7 +64,19 @@ public class Jugador {
 	public void setSesionIniciada(boolean is) {this.isSesionIniciada=is;}
     
     
-    // Equals para buscarlo fÃ¡cilmente en la lista
+	
+	public  void sumarGanancia(double ganancia) {
+		
+		this.setSaldo(ganancia+saldo);
+		
+	}
+	
+	public void restarApuesta(double apuesta) {
+		this.setSaldo(saldo-apuesta);
+	}
+	
+	
+    // Equals para buscarlo facilmente en la lista
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;

@@ -3,12 +3,12 @@ package logicaRuleta;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintWriter; // Usamos esto para facilitar los envíos
 import java.net.Socket;
-import java.time.LocalDate;
 
+import modeloDominio.Apuesta;
 import modeloDominio.Jugador;
+import modeloDominio.TipoApuesta;
 
 public class AtenderJugador implements Runnable {
 
@@ -157,7 +157,6 @@ public class AtenderJugador implements Runnable {
             // Mientras la mesa esté abierta, permitimos apostar
             boolean seguirApostando = true;
             
-            CrearApuestas apuesta=null;
             while (seguirApostando) { 
                 out.println("1. Apostar");
                 out.println("2. Terminar apuestas (Esperar resultado)");
@@ -169,7 +168,8 @@ public class AtenderJugador implements Runnable {
                 if (op.equals("1")) {
                 	
                 
-                	this.rule.getPool().execute(new CrearApuestas(this.rule,this.jugador));
+                	//this.rule.getPool().execute(new CrearApuestas(this.rule,this.jugador));
+                	this.rule.anadirApuesta(jugador, new Apuesta(jugador,TipoApuesta.COLOR,"ROJO",200));
                 	break;
         			
                    

@@ -3,14 +3,21 @@ package logicaRuleta;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import modeloDominio.Apuesta;
 import modeloDominio.Casilla;
@@ -27,29 +34,35 @@ public class ServicioRuletaServidor {
 	//Los jugadores que han hecho apuestas.
 	private Map<Jugador,List<Apuesta>> jugadorApuestas;
 	
-	
-	//private List<Socket> clientesConectados;
-	
-	
-	//private Casilla casillaGanadora;
+	private ExecutorService pool;
 	
 	private CountDownLatch noVaMas;
 	private CountDownLatch VaMas;
+	
+	private boolean isNoVaMas;
 	
 	
 	public ServicioRuletaServidor() {
 		
 		this.noVaMas=new CountDownLatch(1);
 		this.VaMas = new CountDownLatch(1);
+		this.isNoVaMas=false;
+
+		
 		
 		this.jugadoresSesion=new ArrayList<>();
 		this.jugadorApuestas = new ConcurrentHashMap<>();
+		
+		this.pool=Executors.newCachedThreadPool();
 		
 		
 		
 	}
 	
 	//Getters/Setters
+	
+	public ExecutorService getPool() {return this.pool;}	
+	public void setPool(ExecutorService pool) {this.pool=pool;}
 	
 	public List<Jugador> getListJugadoresSesion(){return this.jugadoresSesion;}
 	public void setListJugadoresSesion(List<Jugador> lj) {this.jugadoresSesion= Collections.synchronizedList(lj);}
@@ -82,27 +95,48 @@ public class ServicioRuletaServidor {
 
 	public void resetNoVaMas() {
 		
+		this.isNoVaMas=false;
+		this.jugadorApuestas.clear();
+		this.pool=Executors.newCachedThreadPool();
 		this.noVaMas=new CountDownLatch(1);
 		this.VaMas.countDown();
 		
 	}
 	
 	public void NoVaMas() {
-		
-		this.noVaMas.countDown();
-		this.VaMas=new CountDownLatch(1);
+	    this.isNoVaMas = true;
+	    
+	    // Primero, marcar que no se aceptan más apuestas
+	    this.pool.shutdown(); // No acepta nuevas tareas
+	    
+	    try {
+	        // Esperar un tiempo razonable a que terminen
+	        if (!this.pool.awaitTermination(2, TimeUnit.SECONDS)) {
+	            // Si no terminan, forzar
+	            this.pool.shutdownNow();
+	        }
+	    } catch (InterruptedException e) {
+	        this.pool.shutdownNow();
+	    }
+	    
+	    this.noVaMas.countDown();
+	    this.VaMas = new CountDownLatch(1);
+	}
+	
+	public void noVaMasAwait() throws InterruptedException {
+		this.noVaMas.await();
 		
 	}
 	
-	public void noVaMasWait() throws InterruptedException {
-		this.noVaMas.wait();
-	}
-	
-	public void VaMasWait() throws InterruptedException {
+	public void VaMasAwait() throws InterruptedException {
 		
-		this.VaMas.wait();
+		this.VaMas.await();
 	}
 	
+	public boolean isNoVaMas() {
+		
+		return isNoVaMas;
+	}
 	
 	//------------------------
 	
@@ -133,30 +167,13 @@ public class ServicioRuletaServidor {
 	}
 	
 	
-	
-//Metodo inutil.
-	public int anadirJugador(Jugador jug){
-		
-		if(jugadoresSesion.contains(jug)) {		
-			
-			return 0;
-		}
-		
-		if(jugadoresSesion.add(jug)) {
-			
-			return 1;
-			
-		}
-		
-		//No ha podido añadir al jugador
-		return 2;
-	}
+
 	
 	
 	public void establecerConexion(Jugador jug, Socket cliente) {
 		
 		
-		if(!jug.isSesionIniciada()) { 
+		if(jug.isSesionIniciada()==false) { 
 			
 			jug.setSesionIniciada(true);
 			jug.setConexion(cliente);
@@ -237,14 +254,29 @@ public class ServicioRuletaServidor {
 	//--------------------------------------------------------------
 	
 	
-	public boolean anadirApuesta(Apuesta apuesta) {
+	public boolean anadirApuesta(Jugador jug, Apuesta apuesta) {
 		
+		boolean add = false;
 		
-		List<Apuesta> listaDelJugador = 
-				this.jugadorApuestas.computeIfAbsent(apuesta.getJugador(), k -> Collections.synchronizedList(new ArrayList<>()));
+		if(apuesta!=null) {
+			
+			List<Apuesta> listaDelJugador = 
+					this.jugadorApuestas.computeIfAbsent(jug, k -> Collections.synchronizedList(new ArrayList<>()));
 
-		    // 3. Añadimos a la lista (ahora es seguro hacerlo desde varios hilos)
-		    return listaDelJugador.add(apuesta);
+			    // 3. Añadimos a la lista (ahora es seguro hacerlo desde varios hilos)
+			    add = listaDelJugador.add(apuesta);
+			    
+			if(add) {
+				
+				jug.setSaldo(jug.getSaldo()-apuesta.getCantidad());
+				
+			}
+			    
+			
+		}
+		
+		return add;
+		
 		    
 		    
 		/*
@@ -281,115 +313,47 @@ public class ServicioRuletaServidor {
 
 	public void repartirPremio(Casilla ganadora) {
 		
-	
-		OutputStream os;
-		double ganancia=0.0;
-
-		for (Map.Entry<Jugador, List<Apuesta>> entrada : this.jugadorApuestas.entrySet()) {
-			
-			ganancia=0.0;
-			
-			try {
-				
-				//Obtenemos el outputstream del jugador.
-				
-				os = entrada.getKey().getConexion().getOutputStream();
-			
 		
+		
+		final CyclicBarrier starter = new CyclicBarrier(this.jugadorApuestas.size()+1);
+		ExecutorService pool = Executors.newFixedThreadPool(this.jugadorApuestas.size());
+		try {
+			
+			 for (Map.Entry<Jugador, List<Apuesta>> entry : this.jugadorApuestas.entrySet()) {
+			    	
+				    
+			    	pool.execute(new MandarPremios(entry.getKey(),new ArrayList<>(entry.getValue()), ganadora, starter));
+		    		 
+			    		    	
+			    	
+			    }
+			 
+				starter.await();
 
 			
-				for(Apuesta t : entrada.getValue()) {
-					
-					 ganancia = this.calcularPremio(ganadora, t) + ganancia;
-					
-					
-			}
+		}catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (BrokenBarrierException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}finally {
 			
+			pool.shutdown();
 			
-			
-					
-				os.write(("HAS GANADO: " + ganancia + "€").getBytes());
-				os.flush();
-				
-			}catch(IOException e) {
-				
-				//Manejar la desconexion
-				
-			}finally {
-				
-				
-				this.jugadorApuestas.clear();
-				
-				
-			}
-			
-			
-		    
 		}
+			
+	   
+	    
+	   
+		
 		
 		
 	}
+
 	
-	public double calcularPremio(Casilla ganadora, Apuesta apuesta) {
-		
-	    double cantidad = apuesta.getCantidad();
-	    String valorApostado = apuesta.getValor(); // Ej: "17", "ROJO", "PAR", "1" (1ª docena)
+	
 
-	    switch(apuesta.getTipo()) { // Asumo que getApuesta() devuelve el Enum TIPO
-
-	        case NUMERO:
-	            // Convertimos el valor de la apuesta (String) a entero para comparar
-	            try {
-	                int numeroApostado = Integer.parseInt(valorApostado);
-	                if (numeroApostado == ganadora.getNumero()) {
-	                    return cantidad * 36; 
-	                }
-	            } catch (NumberFormatException e) {
-	                System.err.println("Error formato numero: " + valorApostado);
-	            }
-	            break;
-
-	        case COLOR:
-	            // Si sale el 0 (VERDE), las apuestas a color suelen perder
-	            if (ganadora.getNumero() != 0) {
-	                // Comparamos ignorando mayúsculas/minúsculas (ej: "ROJO" vs "Rojo")
-	                if (valorApostado.equalsIgnoreCase(ganadora.getColor())) {
-	                    return cantidad * 2;
-	                }
-	            }
-	            break;
-
-	        case PAR_IMPAR:
-	            // El 0 no se considera ni par ni impar para pagar apuestas (la banca gana)
-	            if (ganadora.getNumero() != 0) {
-	                boolean apostoPar = valorApostado.equalsIgnoreCase("PAR");
-	                // Si apostó PAR y salió PAR, o si apostó IMPAR y salió IMPAR (no par)
-	                if ((apostoPar && ganadora.getNumero()%2==0) || (!apostoPar && ganadora.getNumero()%2!=0)) {
-	                    return cantidad * 2;
-	                }
-	            }
-	            break;
-
-	        case DOCENA:
-	            // Asumimos que valorApostado es "1", "2" o "3"
-	            // O que la Casilla tiene un método getDocena() que devuelve 1, 2, 3 (y 0 si es el cero)
-	            try {
-	                int docenaApostada = Integer.parseInt(valorApostado);
-	                if (docenaApostada == ganadora.getDocena()) {
-	                    return cantidad * 3;
-	                }
-	            } catch (NumberFormatException e) {
-	                 System.err.println("Error formato docena: " + valorApostado);
-	            }
-	            break;
-
-	        default: 
-	            return 0;
-	    }
-
-	    // Si llega aquí es que no entró en ningún IF de ganar, por tanto perdió.
-	    return 0;
-	}
 	
 	
 }

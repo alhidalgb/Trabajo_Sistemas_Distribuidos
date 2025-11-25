@@ -1,7 +1,5 @@
 package modeloDominio;
 
-import java.io.Reader;
-import java.io.Serializable;
 
 public class Apuesta  {
 

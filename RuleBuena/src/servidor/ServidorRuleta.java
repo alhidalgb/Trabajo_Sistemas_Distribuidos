@@ -22,7 +22,6 @@ public class ServidorRuleta {
 		
 		List<Jugador> jugadoresConSesion = BDJugadores.UnmarshallingJugadores(bd); //Aqui se hace el unmarshalling
 		
-		System.out.println("hola");
 
 		for(Jugador j : jugadoresConSesion) {
 			
@@ -46,7 +45,7 @@ public class ServidorRuleta {
 	        
 	        // Programamos la tarea "RondaDeJuego" para que ocurra cada 30 segundos
 	        // Parametros: Tarea, retardo inicial, periodo, unidad de tiempo
-	        scheduler.scheduleAtFixedRate(new GiraPelotita(rule,pool,xml), 0, 60, TimeUnit.SECONDS);
+	        scheduler.scheduleWithFixedDelay(new GiraPelotita(rule,pool,xml), 0, 10, TimeUnit.SECONDS);
 			
 			
 			
@@ -79,6 +78,8 @@ public class ServidorRuleta {
 			e.printStackTrace();
 		}
 		finally {
+			
+			
 			
 			BDJugadores.MarshallingJugadores(jugadoresConSesion, bd);
 			
