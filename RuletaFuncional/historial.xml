@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><historial>
+    <listapuestas fecha="2025-11-22" ganadora="0">
+        <jugador id="pepe">
+            <apuesta cantidad="10.0" tipo="NUMERO" valor="7">Apuesta de la suerte</apuesta>
+        </jugador>
+        
+        <jugador id="ana">
+            <apuesta cantidad="50.5" tipo="COLOR" valor="ROJO"/>
+        </jugador>
+    </listapuestas>
+
+    <listapuestas fecha="2025-11-23" ganadora="6">
+        <jugador id="pepe">
+            <apuesta cantidad="20.0" tipo="PAR_IMPAR" valor="PAR">Recuperando pérdidas</apuesta>
+        </jugador>
+    </listapuestas>
+<listapuestas fecha="Tue Nov 25 18:29:08 CET 2025" ganadora="21"/><listapuestas fecha="Tue Nov 25 18:29:22 CET 2025" ganadora="5"/><listapuestas fecha="Tue Nov 25 18:29:36 CET 2025" ganadora="35"/><listapuestas fecha="Tue Nov 25 18:29:50 CET 2025" ganadora="10"/><listapuestas fecha="Tue Nov 25 18:30:04 CET 2025" ganadora="5"><jugador id="juan"><apuesta cantidad="300.0" tipo="COLOR" valor="ROJO"/></jugador></listapuestas><listapuestas fecha="Tue Nov 25 18:30:18 CET 2025" ganadora="30"/><listapuestas fecha="Tue Nov 25 18:30:32 CET 2025" ganadora="24"/><listapuestas fecha="Tue Nov 25 18:30:46 CET 2025" ganadora="13"/><listapuestas fecha="Tue Nov 25 18:34:11 CET 2025" ganadora="1"/><listapuestas fecha="Tue Nov 25 18:34:35 CET 2025" ganadora="29"/><listapuestas fecha="Tue Nov 25 18:35:32 CET 2025" ganadora="22"/><listapuestas fecha="Tue Nov 25 18:35:56 CET 2025" ganadora="5"/><listapuestas fecha="Tue Nov 25 18:36:20 CET 2025" ganadora="31"/><listapuestas fecha="Tue Nov 25 18:36:44 CET 2025" ganadora="15"><jugador id="juan"><apuesta cantidad="1000.0" tipo="NUMERO" valor="0"/></jugador></listapuestas><listapuestas fecha="Tue Nov 25 18:37:08 CET 2025" ganadora="29"/><listapuestas fecha="Tue Nov 25 18:37:32 CET 2025" ganadora="7"/><listapuestas fecha="Tue Nov 25 18:37:56 CET 2025" ganadora="20"/><listapuestas fecha="Tue Nov 25 18:38:20 CET 2025" ganadora="1"/><listapuestas fecha="Tue Nov 25 18:38:44 CET 2025" ganadora="15"/><listapuestas fecha="Tue Nov 25 18:39:08 CET 2025" ganadora="7"/><listapuestas fecha="Tue Nov 25 18:39:32 CET 2025" ganadora="9"/><listapuestas fecha="Tue Nov 25 18:39:56 CET 2025" ganadora="27"/><listapuestas fecha="Tue Nov 25 21:06:48 CET 2025" ganadora="34"/><listapuestas fecha="Tue Nov 25 21:07:12 CET 2025" ganadora="11"><jugador id="juan"><apuesta cantidad="300.0" tipo="NUMERO" valor="6"/><apuesta cantidad="30.0" tipo="COLOR" valor="ROJO"/></jugador></listapuestas><listapuestas fecha="Tue Nov 25 21:07:36 CET 2025" ganadora="11"><jugador id="juan"><apuesta cantidad="200.0" tipo="COLOR" valor="ROJO"/><apuesta cantidad="50.0" tipo="COLOR" valor="ROJO"/></jugador></listapuestas><listapuestas fecha="Tue Nov 25 21:08:00 CET 2025" ganadora="9"/><listapuestas fecha="Tue Nov 25 21:08:24 CET 2025" ganadora="36"><jugador id="juan"><apuesta cantidad="5.0" tipo="COLOR" valor="ROJO"/><apuesta cantidad="5.0" tipo="NUMERO" valor="0"/></jugador></listapuestas><listapuestas fecha="Tue Nov 25 21:08:48 CET 2025" ganadora="19"><jugador id="juan"><apuesta cantidad="5.0" tipo="COLOR" valor="ROJO"/><apuesta cantidad="5.0" tipo="DOCENA" valor="2"/></jugador></listapuestas><listapuestas fecha="Tue Nov 25 21:09:12 CET 2025" ganadora="7"/><listapuestas fecha="Tue Nov 25 21:09:36 CET 2025" ganadora="20"/></historial>
