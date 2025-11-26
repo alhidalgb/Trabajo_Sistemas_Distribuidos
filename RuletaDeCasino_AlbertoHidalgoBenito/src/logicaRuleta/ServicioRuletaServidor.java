@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -22,9 +21,8 @@ import modeloDominio.Casilla;
 import modeloDominio.Jugador;
 
 public class ServicioRuletaServidor {
-	
+
 	private final ExecutorService poolServer;
-	
 	private final List<Jugador> jugadoresSesion;
     private Map<Jugador, List<Apuesta>> jugadorApuestas;
     
@@ -39,7 +37,7 @@ public class ServicioRuletaServidor {
     private volatile boolean isNoVaMas; // IMPORTANTE: volatile para visibilidad entre hilos
     
     
-    public ServicioRuletaServidor(List<Jugador> jugadoresSesion,ExecutorService pool) {
+    public ServicioRuletaServidor(List<Jugador> jugadoresSesion, ExecutorService pool) {
         this.noVaMas = new CountDownLatch(1);
         this.VaMas = new CountDownLatch(1);
         this.isNoVaMas = false;
@@ -47,7 +45,6 @@ public class ServicioRuletaServidor {
         this.jugadoresSesion = Collections.synchronizedList(jugadoresSesion);
         this.jugadorApuestas = new ConcurrentHashMap<>();
         this.jugadoresConexion = Collections.synchronizedList(new ArrayList<>());
-        
         this.poolServer=pool;
     }
     
@@ -59,7 +56,7 @@ public class ServicioRuletaServidor {
         this.jugadoresSesion = Collections.synchronizedList(new ArrayList<>());
         this.jugadorApuestas = new ConcurrentHashMap<>();
         this.jugadoresConexion = Collections.synchronizedList(new ArrayList<>());
-        this.poolServer= Executors.newCachedThreadPool();
+        this.poolServer=Executors.newCachedThreadPool();
     }
 
     
@@ -265,9 +262,6 @@ public class ServicioRuletaServidor {
             return;
         }
 
-        
-        
-        
         final CyclicBarrier starter = new CyclicBarrier(this.jugadorApuestas.size() + 1);
         ExecutorService poolPremios = Executors.newFixedThreadPool(this.jugadorApuestas.size());
 
@@ -309,33 +303,16 @@ public class ServicioRuletaServidor {
         }
 
         synchronized (this.jugadoresConexion) {
-        
-        	// Snapshot del tamaño actual → si alguien se conecta después, no participa en esta ronda
-        	int N = this.jugadoresConexion.size();
-        	final CyclicBarrier starter = new CyclicBarrier(N + 1);
-            ExecutorService poolCasilla = Executors.newFixedThreadPool(N);
-                  
+            // Snapshot del tamaño actual → si alguien se conecta después, no participa en esta ronda
+            final CyclicBarrier starter = new CyclicBarrier(this.jugadoresConexion.size() + 1);
+            ExecutorService poolCasilla = Executors.newFixedThreadPool(this.jugadoresConexion.size());
+
             try {
-            	              
-                int particiones = new Random().nextInt(N/2);
-                int inicio=0;
-                int fin = N/particiones;
-                
-                for(int i=0;i<particiones;i++) {
-                	
-                	
-                	poolCasilla.execute(new MandarCasillaGanadora(this.jugadoresConexion, starter, ganadora,inicio,fin, poolCasilla));
-                	
-                	inicio = fin;
-                	fin = fin+fin;
-                	
-                	if(fin>N) {
-                		
-                		fin=N;
-                	}
-                	
+                for (Jugador j : this.jugadoresConexion) {
+                    // Mantengo tu clase MandarCasillaGanadora
+                    poolCasilla.execute(new MandarCasillaGanadora(j.getConexion(), starter, ganadora));
                 }
-            	
+
                 // Esperar a que todos los hilos lleguen a la barrera
                 starter.await();
 
@@ -382,10 +359,9 @@ public class ServicioRuletaServidor {
         }
         
         jugadoresConexion.remove(jug);
-        
-        //No pasa nada por que se produzcan errores de carrera, en el sentido de estar todo el rato sobreescribiendo, ya que al final la lista
-        // jugadoresSesion siempre va a estar acutalizada.
-        this.poolServer.execute(new ActualizarBD(new ArrayList<>(this.jugadoresSesion),"jugadores.xml"));
+        //No pasa nada por que se produzcan errores de carrera, en el sentido de estar todo el rato sobreescribiendo, ya que al final la lista        
+        // jugadoresSesion siempre va a estar acutalizada.         
+        this.poolServer.execute(new ActualizarBD(new ArrayList<>(this.jugadoresSesion),"jugadores.xml"));        
        
     }
 

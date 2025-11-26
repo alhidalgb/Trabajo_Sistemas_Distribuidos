@@ -1,8 +1,6 @@
 package servidor;
 
 import java.util.Random;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -39,12 +37,8 @@ public class GiraPelotita implements Runnable {
         Casilla ganadora = new Casilla(numeroGanador);
 
         // 4. REPARTIR PREMIOS 
-        final CyclicBarrier pelotita = new CyclicBarrier(3);
-        
-        pool.execute(new mandarMensaje(rule,1,ganadora,pelotita));
-        pool.execute(new mandarMensaje(rule,2,ganadora,pelotita));
-
- 
+        rule.mandarCasilla(ganadora);
+        rule.repartirPremio(ganadora);
 
         // 5. GUARDAR EN XML (en paralelo)
         pool.execute(new guardarApuestas(rule.getCopiaJugadorApuestas(), ganadora, xml));
@@ -57,16 +51,6 @@ public class GiraPelotita implements Runnable {
             System.err.println("⚠️ GiraPelotita interrumpida durante la espera antes de resetear");
         }
 
-        
-        //esperamos a que se hayan mandado los mensajes.
-        
-        try {
-			pelotita.await();
-		} catch (InterruptedException | BrokenBarrierException e) {
-			// TODO Auto-generated catch block
-			//e.printStackTrace();
-		}
-        
         // 7. RESETEAR Y ABRIR NUEVA RONDA
         rule.resetNoVaMas();
     }
