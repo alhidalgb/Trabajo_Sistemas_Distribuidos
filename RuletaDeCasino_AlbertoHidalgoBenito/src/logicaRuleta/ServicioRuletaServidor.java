@@ -12,8 +12,10 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import modeloDominio.Apuesta;
@@ -34,7 +36,7 @@ public class ServicioRuletaServidor {
     private CountDownLatch noVaMas;
     private CountDownLatch VaMas;
     
-    private volatile boolean isNoVaMas; // IMPORTANTE: volatile para visibilidad entre hilos
+    private boolean isNoVaMas; 
     
     
     public ServicioRuletaServidor(List<Jugador> jugadoresSesion, ExecutorService pool) {
@@ -136,7 +138,8 @@ public class ServicioRuletaServidor {
     
     // GESTIÓN DE JUGADORES
     
-    public Jugador getJugador(String iD) {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	public Jugador getJugador(String iD) {
         // Caso de entrada inválida: id nulo o vacío
         if (iD == null || iD.trim().isEmpty()) {
             
@@ -144,18 +147,66 @@ public class ServicioRuletaServidor {
             return null;
         }
 
+        
+        
         synchronized (jugadoresSesion) {
-            for (Jugador j : jugadoresSesion) {
-                String jid = j.getID();
-                // Ignoramos jugadores con id == null
-                if (jid != null && jid.equals(iD)) {
-                    return j;
-                }
-            }
+        	     	
+        	int N = this.jugadoresSesion.size();
+        	int particiones = 30;
+        	
+        	    	
+        	int in=0;
+        	int fin = 2;  
+        	
+        	if(30<N) {fin=N/30;}
+        	int suma = fin;
+        	
+        	List<Future<Jugador>> lfj=new ArrayList<>(particiones);
+        	
+			for(int i=0;i<particiones;i++) {
+				
+				
+				//Super importante mandar una copia, si mando la referencia original al estar en un bloque synchronize se bloquea todo.
+				//Mando un copia, como esta en un bloque sincrono de la lista no hya porblema, no se cambiara mientras la utilizo,
+				
+				lfj.add(this.poolServer.submit(new GetIDHilos(new ArrayList<>(this.jugadoresSesion),in,fin,iD)));
+				
+				
+				in +=suma;
+				fin += suma;
+				
+				if(fin>N) {fin=N;}
+				
+				
+			}
+			
+			Jugador sesion =null;
+			
+			for(Future<Jugador> jug : lfj) {
+				
+				try {
+					sesion=jug.get();
+					if(sesion!=null) {
+						break;
+					}
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (ExecutionException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+							
+				
+			}
+        	
+			//Cerramos los future para ahorra CPU.
+			this.poolServer.execute(new cancelarFuture(lfj));		
+			return sesion;
+        	      
         }
-        // No encontrado → devolvemos null
-        return null;
     }
+
 
     
     public void establecerConexion(Jugador jug, Socket cliente) throws IOException {
@@ -175,7 +226,7 @@ public class ServicioRuletaServidor {
                 cliente.close();
 
                 // Desconexión controlada en el servidor
-                this.desconectar(jug); // aquí llamamos al método de la rule
+                this.desconectarJugador(jug); // aquí llamamos al método de la rule
             }
         }
     }
@@ -335,7 +386,7 @@ public class ServicioRuletaServidor {
     }
 
     
-    public void desconectar(Jugador jug) {
+    public void desconectarJugador(Jugador jug) {
         if (jug == null) {
             return;
         }
@@ -363,6 +414,15 @@ public class ServicioRuletaServidor {
         // jugadoresSesion siempre va a estar acutalizada.         
         this.poolServer.execute(new ActualizarBD(new ArrayList<>(this.jugadoresSesion),"jugadores.xml"));        
        
+    }
+    
+    
+    public void desconectarTodo() {
+    	
+    	
+    	//Pendiente de pensar, hay que teneer en cuenta los flags, isInterrupt().
+    	
+    	
     }
 
     

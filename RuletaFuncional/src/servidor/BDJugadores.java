@@ -46,12 +46,13 @@ public class BDJugadores {
             Unmarshaller um = context.createUnmarshaller();
 
             // SUPER IMPORTANTE: ignorar validación contra DTD para evitar JAXBException
-            um.setSchema(null);
+            //um.setSchema(null);
 
             FileReader file = new FileReader(nameFile);
             ListaJugadores listJugadores = (ListaJugadores) um.unmarshal(file);
             return listJugadores.getLista();
         } catch (JAXBException e) {
+        	e.printStackTrace();
             System.err.println("⚠️ Error unmarshalling jugadores: " + e.getMessage());
             return new ArrayList<>();
         } catch (FileNotFoundException e) {

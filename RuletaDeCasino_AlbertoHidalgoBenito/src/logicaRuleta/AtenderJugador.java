@@ -66,7 +66,7 @@ public class AtenderJugador implements Runnable {
             	
                 boolean salir = false;
 
-                while (!salir) {
+                while (!salir && !Thread.currentThread().isInterrupted()) {
                     // Mostramos el menú
                     out.println("\n--- MENÚ PRINCIPAL ---");
                     out.println("Saldo actual: " + jugador.getSaldo() + "€");
@@ -539,7 +539,7 @@ public class AtenderJugador implements Runnable {
         // 1. Actualizar BD / servidor
         try {
             if (jugador != null) {
-                this.rule.desconectar(this.jugador);
+                this.rule.desconectarJugador(this.jugador);
             }
         } catch (Exception e) {
             System.out.println("⚠️ Error al desconectar jugador en servidor: " + e.getMessage());

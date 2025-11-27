@@ -73,6 +73,7 @@ public class MandarPremios implements Runnable {
             os = null;
         }
 
+        
         // 3. Sincronizar con otros hilos mediante la barrera
         try {
             starter.await();

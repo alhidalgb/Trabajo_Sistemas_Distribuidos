@@ -3,97 +3,118 @@ package modeloDominio;
 import java.util.Objects;
 
 /**
+ * Clase Casilla
+ * -------------
  * Representa una casilla de la ruleta, definida por un número y un color asociado.
- * La clase es inmutable.
+ * La clase es inmutable: todos los campos son finales y no existen setters.
+ *
+ * PRECONDICIONES:
+ *  - El número debe estar en el rango [0, 36].
+ *
+ * POSTCONDICIONES:
+ *  - Se crea una casilla con número y color asignados según las reglas de la ruleta.
+ *  - El método getDocena() devuelve la docena a la que pertenece el número (1, 2, 3) o 0 si es el 0.
+ *  - equals() y hashCode() permiten comparar casillas de forma coherente.
+ *  - toString() devuelve una representación legible de la casilla.
  */
 public class Casilla {
-	
-	
-	// Enumeración para definir los posibles colores
 
-	private final int numero;
-	private final COLOR color;
-	
-	/**
-	 * Constructor: Inicializa la casilla y asigna su color basado en las reglas de la ruleta.
-	 * PRE: 'num' debe ser un número entero >= 0.
-	 */
-	public Casilla(int num) {
-		
-		this.numero = num;
-		
-		if (num == 0) {
-			this.color = COLOR.VERDE;
-		} else if ((num >= 1 && num <= 10) || (num >= 19 && num <= 28)) {
-			// Reglas comunes: 1-10 y 19-28: Impares son Rojos, Pares son Negros
-			this.color = (num % 2 != 0) ? COLOR.ROJO : COLOR.NEGRO;
-		} else if ((num >= 11 && num <= 18) || (num >= 29 && num <= 36)) {
-			// Reglas comunes: 11-18 y 29-36: Impares son Negros, Pares son Rojos
-			this.color = (num % 2 != 0) ? COLOR.NEGRO : COLOR.ROJO;
-		} else {
-             // Fallback, aunque los números de ruleta están entre 0 y 36
-             this.color = COLOR.VERDE;
+    // --- ATRIBUTOS ---
+    private final int numero;
+    private final COLOR color;
+
+    // --- CONSTRUCTOR ---
+    /**
+     * Constructor: Inicializa la casilla y asigna su color basado en las reglas de la ruleta.
+     *
+     * PRECONDICIONES:
+     *  - num >= 0 y num <= 36.
+     *
+     * POSTCONDICIONES:
+     *  - Se asigna el color correcto según el número:
+     *      - 0 → VERDE
+     *      - 1-10 y 19-28 → Impares ROJO, Pares NEGRO
+     *      - 11-18 y 29-36 → Impares NEGRO, Pares ROJO
+     */
+    public Casilla(int num) {
+        this.numero = num;
+
+        if (num == 0) {
+            this.color = COLOR.VERDE;
+        } else if ((num >= 1 && num <= 10) || (num >= 19 && num <= 28)) {
+            this.color = (num % 2 != 0) ? COLOR.ROJO : COLOR.NEGRO;
+        } else if ((num >= 11 && num <= 18) || (num >= 29 && num <= 36)) {
+            this.color = (num % 2 != 0) ? COLOR.NEGRO : COLOR.ROJO;
+        } else {
+            // Fallback defensivo: aunque los números válidos son 0-36
+            this.color = COLOR.VERDE;
         }
-	}
+    }
 
-	
-	// --- GETTERS ---
-	
-	public int getNumero() {
-		return numero;
-	}
+    // --- GETTERS ---
+    /**
+     * @return Número de la casilla.
+     */
+    public int getNumero() {
+        return numero;
+    }
 
-	public String getColor() {
-		return color.toString();
-	}
+    /**
+     * @return Color de la casilla como cadena.
+     */
+    public String getColor() {
+        return color.toString();
+    }
 
-	/**
-	 * POST: Devuelve la docena a la que pertenece el número (1, 2, 3) o 0 si es el 0.
-	 */
-	public int getDocena() {
-		if (this.numero >= 1 && this.numero <= 12) {
-			return 1;
-		}
-		if (this.numero >= 13 && this.numero <= 24) {
-			return 2;
-		}
-		if (this.numero >= 25 && this.numero <= 36) {
-			return 3;
-		}
-		return 0; // Para el 0
-	}
-    
+    /**
+     * Devuelve la docena a la que pertenece el número.
+     *
+     * POSTCONDICIONES:
+     *  - Si el número está entre 1 y 12 → devuelve 1.
+     *  - Si el número está entre 13 y 24 → devuelve 2.
+     *  - Si el número está entre 25 y 36 → devuelve 3.
+     *  - Si el número es 0 → devuelve 0.
+     */
+    public int getDocena() {
+        if (this.numero >= 1 && this.numero <= 12) {
+            return 1;
+        }
+        if (this.numero >= 13 && this.numero <= 24) {
+            return 2;
+        }
+        if (this.numero >= 25 && this.numero <= 36) {
+            return 3;
+        }
+        return 0;
+    }
+
     // --- MÉTODOS DE OBJETO ---
-
     /**
      * Devuelve una representación en cadena del objeto Casilla.
      */
     @Override
     public String toString() {
-    	 	
-    	return "[" + numero + " - " + color.toString() + " - DOCENA:" + this.getDocena()+"]";
-    	
+        return "[Número=" + numero + ", Color=" + color.toString() + ", Docena=" + this.getDocena() + "]";
     }
 
     /**
-     * Comprueba si dos objetos Casilla son iguales, basándose en su número.
+     * Comprueba si dos objetos Casilla son iguales, basándose en número y color.
+     *
+     * @param obj Objeto a comparar.
+     * @return true si son iguales, false en caso contrario.
      */
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
+        if (this == obj) return true;
+        if (!(obj instanceof Casilla)) return false;
         Casilla otraCasilla = (Casilla) obj;
-        
-        // Una casilla es igual a otra si su número y color coinciden.
         return numero == otraCasilla.numero && color == otraCasilla.color;
     }
 
     /**
-     * Devuelve un valor hash consistente con el método equals().
+     * Devuelve un valor hash consistente con equals().
+     *
+     * @return hash calculado en base a número y color.
      */
     @Override
     public int hashCode() {

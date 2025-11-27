@@ -13,8 +13,10 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import modeloDominio.Apuesta;
@@ -139,7 +141,7 @@ public class ServicioRuletaServidor {
     
     // GESTIÓN DE JUGADORES
     
-    public Jugador getJugador(String iD) {
+	public Jugador getJugador(String iD) {
         // Caso de entrada inválida: id nulo o vacío
         if (iD == null || iD.trim().isEmpty()) {
             
@@ -147,17 +149,57 @@ public class ServicioRuletaServidor {
             return null;
         }
 
+        
+        
         synchronized (jugadoresSesion) {
-            for (Jugador j : jugadoresSesion) {
-                String jid = j.getID();
-                // Ignoramos jugadores con id == null
-                if (jid != null && jid.equals(iD)) {
-                    return j;
-                }
-            }
+        	     	
+        	int N = this.jugadoresSesion.size();
+        	int particiones = 30;
+        	
+        	ExecutorService poolGetID = Executors.newFixedThreadPool(particiones);
+        	    	
+        	int in=0;
+        	int fin = 2;    	
+        	if(30<N) {fin=N/30;}
+        	
+        	List<Future<Jugador>> lfj=new ArrayList<>(particiones);
+        	
+			for(int i=0;i<particiones;i++) {
+				lfj.add(poolGetID.submit(new getIDhilos(this.jugadoresSesion,in,fin,iD)));
+				
+				
+				in = fin;
+				fin=fin+fin;
+				
+				if(fin>N) {fin=N;}
+				
+				
+			}
+			
+			Jugador sesion =null;
+			
+			for(Future<Jugador> jug : lfj) {
+				
+				try {
+					sesion=jug.get();
+					if(sesion!=null) {
+						break;
+					}
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (ExecutionException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+							
+				
+			}
+        	
+			poolGetID.shutdown();
+			return sesion;
+        	      
         }
-        // No encontrado → devolvemos null
-        return null;
     }
 
     

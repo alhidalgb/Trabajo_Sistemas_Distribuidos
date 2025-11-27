@@ -6,7 +6,7 @@ public class PrincipalCliente {
 
 	public static void main(String[] args) {
 		
-        new ClienteRuleta(8000).IniciarCliente();
+        new ClienteRuleta("LOCALHOST",8000).IniciarCliente();
 	
 	}
 
