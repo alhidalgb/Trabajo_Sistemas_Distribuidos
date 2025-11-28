@@ -1,4 +1,4 @@
-package logicaRuleta;
+package logicaRuleta.core;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -177,7 +177,10 @@ public class AtenderJugador implements Runnable {
             out.println("--- ¡HAGAN JUEGO! (Mesa Abierta) ---");
             
             boolean seguirApostando = true;
-            while (seguirApostando) { 
+            while (seguirApostando) {
+            	
+            	if(this.jugador.getSaldo()<5) {out.println("❌ No tienes saldo suficiente"); break;}
+            	
                 out.println("1. Apostar");
                 out.println("2. Terminar apuestas (Esperar resultado)");
                 out.println("NECESITO RESPUESTA");
@@ -372,6 +375,8 @@ public class AtenderJugador implements Runnable {
             this.desconectar();
             return null;
         }
+        
+        if(this.jugador.getSaldo()<5) {out.println("❌ No tienes saldo suficiente");return null; }
 
         try {
             out.println("\n--- NUEVA APUESTA ---");

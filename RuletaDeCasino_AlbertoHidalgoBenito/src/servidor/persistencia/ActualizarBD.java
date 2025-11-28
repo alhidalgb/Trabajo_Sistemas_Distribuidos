@@ -1,8 +1,7 @@
-package logicaRuleta;
+package servidor.persistencia;
 
 import java.util.List;
 import modeloDominio.Jugador;
-import servidor.BDJugadores;
 
 /**
  * Clase ActualizarBD

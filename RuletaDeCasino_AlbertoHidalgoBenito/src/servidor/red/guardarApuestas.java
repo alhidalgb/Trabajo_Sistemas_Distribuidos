@@ -1,4 +1,4 @@
-package servidor;
+package servidor.red;
 
 import java.util.List;
 import java.util.Map;
@@ -6,6 +6,7 @@ import java.util.Map;
 import modeloDominio.Apuesta;
 import modeloDominio.Casilla;
 import modeloDominio.Jugador;
+import servidor.persistencia.XMLServidor;
 
 /**
  * Clase guardarApuestas

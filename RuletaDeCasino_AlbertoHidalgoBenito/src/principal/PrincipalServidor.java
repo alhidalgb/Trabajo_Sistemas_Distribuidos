@@ -1,6 +1,6 @@
 package principal;
 
-import servidor.ServidorRuleta;
+import servidor.red.ServidorRuleta;
 
 public class PrincipalServidor {
 

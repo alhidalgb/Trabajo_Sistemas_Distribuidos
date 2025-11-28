@@ -1,4 +1,4 @@
-package logicaRuleta;
+package logicaRuleta.core;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -18,9 +18,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import logicaRuleta.concurrencia.GetIDHilos;
+import logicaRuleta.concurrencia.MandarCasillaGanadora;
+import logicaRuleta.concurrencia.MandarPremios;
+import logicaRuleta.concurrencia.cancelarFuture;
 import modeloDominio.Apuesta;
 import modeloDominio.Casilla;
 import modeloDominio.Jugador;
+import servidor.persistencia.ActualizarBD;
 
 public class ServicioRuletaServidor {
 
@@ -167,7 +172,7 @@ public class ServicioRuletaServidor {
 				
 				
 				//Super importante mandar una copia, si mando la referencia original al estar en un bloque synchronize se bloquea todo.
-				//Mando un copia, como esta en un bloque sincrono de la lista no hya porblema, no se cambiara mientras la utilizo,
+				//Mando un copia, como esta en un bloque sincrono de la lista no hay porblema, no se cambiara mientras la utilizo,
 				
 				lfj.add(this.poolServer.submit(new GetIDHilos(new ArrayList<>(this.jugadoresSesion),in,fin,iD)));
 				
@@ -323,7 +328,7 @@ public class ServicioRuletaServidor {
                 synchronized (entry.getValue()) {
                     copiaApuestas = new ArrayList<>(entry.getValue());
                 }
-                poolPremios.execute(new MandarPremios(entry.getKey(), copiaApuestas, ganadora, starter));
+                poolPremios.execute(new MandarPremios(entry.getKey(), copiaApuestas, ganadora, starter,this));
             }
 
             // Esperar a que todos los hilos de premios lleguen a la barrera
@@ -344,6 +349,65 @@ public class ServicioRuletaServidor {
                 Thread.currentThread().interrupt();
             }
         }
+    }
+    
+    
+    /**
+     * Calcula el premio de una apuesta concreta según la casilla ganadora.
+     *
+     * @param ganadora Casilla ganadora.
+     * @param apuesta  Apuesta del jugador.
+     * @return Importe ganado (0 si perdió).
+     */
+    public double calcularPremio(Casilla ganadora, Apuesta apuesta) {
+        double cantidad = apuesta.getCantidad();
+        String valorApostado = apuesta.getValor();
+
+        switch (apuesta.getTipo()) {
+            case NUMERO:
+                try {
+                    int numeroApostado = Integer.parseInt(valorApostado);
+                    if (numeroApostado == ganadora.getNumero()) {
+                        return cantidad * 36;
+                    }
+                } catch (NumberFormatException e) {
+                    System.err.println("⚠️ Error formato número: " + valorApostado);
+                }
+                break;
+
+            case COLOR:
+                if (ganadora.getNumero() != 0 &&
+                    valorApostado.equalsIgnoreCase(ganadora.getColor())) {
+                    return cantidad * 2;
+                }
+                break;
+
+            case PAR_IMPAR:
+                if (ganadora.getNumero() != 0) {
+                    boolean apostoPar = valorApostado.equalsIgnoreCase("PAR");
+                    if ((apostoPar && ganadora.getNumero() % 2 == 0) ||
+                        (!apostoPar && ganadora.getNumero() % 2 != 0)) {
+                        return cantidad * 2;
+                    }
+                }
+                break;
+
+            case DOCENA:
+                try {
+                    int docenaApostada = Integer.parseInt(valorApostado);
+                    if (docenaApostada == ganadora.getDocena()) {
+                        return cantidad * 3;
+                    }
+                } catch (NumberFormatException e) {
+                    System.err.println("⚠️ Error formato docena: " + valorApostado);
+                }
+                break;
+
+            default:
+                return 0;
+        }
+
+        return 0;
     }
 
     

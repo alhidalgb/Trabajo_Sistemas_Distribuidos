@@ -1,0 +1,96 @@
+package servidor.red;
+
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import logicaRuleta.core.ServicioRuletaServidor;
+import modeloDominio.Casilla;
+import servidor.persistencia.XMLServidor;
+
+/**
+ * Clase GiraPelotita
+ * ------------------
+ * Tarea Runnable que simula el giro de la bola en la ruleta.
+ * Cierra apuestas, genera la casilla ganadora, reparte premios,
+ * guarda resultados en XML y abre una nueva ronda.
+ *
+ * PRECONDICIONES:
+ *  - El ServicioRuletaServidor debe estar inicializado.
+ *  - El ExecutorService debe estar activo para ejecutar tareas concurrentes.
+ *  - El XMLServidor debe estar disponible para persistencia.
+ *
+ * POSTCONDICIONES:
+ *  - Se cierran las apuestas de la ronda actual.
+ *  - Se genera una casilla ganadora aleatoria.
+ *  - Se reparten premios a los jugadores.
+ *  - Se guardan las apuestas y resultados en XML.
+ *  - Se abre una nueva ronda tras un breve intervalo.
+ */
+public class GiraPelotita implements Runnable {
+
+    // --- ATRIBUTOS ---
+    private final ServicioRuletaServidor rule;
+    private final ExecutorService pool;
+    private final XMLServidor xml;
+
+    // --- CONSTRUCTOR ---
+    /**
+     * Inicializa la tarea de giro de la bola.
+     *
+     * @param rule Servicio de ruleta compartido.
+     * @param pool ExecutorService para tareas concurrentes.
+     * @param xml  Manejador de persistencia XML.
+     */
+    public GiraPelotita(ServicioRuletaServidor rule, ExecutorService pool, XMLServidor xml) {
+        this.rule = rule;
+        this.pool = pool;
+        this.xml = xml;
+    }
+
+    // --- LÓGICA DE NEGOCIO ---
+    /**
+     * Ejecuta la simulación del giro de la bola:
+     * - Cierra apuestas.
+     * - Espera un tiempo de gracia.
+     * - Genera número ganador.
+     * - Reparte premios y comunica la casilla.
+     * - Guarda resultados en XML.
+     * - Espera y abre nueva ronda.
+     */
+    @Override
+    public void run() {
+        // 1. CERRAR APUESTAS
+        this.rule.NoVaMas();
+
+        // 2. ESPERAR 2 segundos para que los hilos de apuestas terminen
+        try {
+            TimeUnit.SECONDS.sleep(2);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // restaurar estado
+            System.err.println("⚠️ GiraPelotita interrumpida durante la espera de cierre de apuestas");
+        }
+
+        // 3. GENERAR NÚMERO GANADOR
+        int numeroGanador = new Random().nextInt(37); // 0-36
+        Casilla ganadora = new Casilla(numeroGanador);
+
+        // 4. REPARTIR PREMIOS Y COMUNICAR CASILLA
+        this.rule.mandarCasilla(ganadora);
+        this.rule.repartirPremio(ganadora);
+
+        // 5. GUARDAR EN XML (en paralelo)
+        this.pool.execute(new guardarApuestas(this.rule.getCopiaJugadorApuestas(), ganadora, this.xml));
+
+        // 6. ESPERAR 2 SEGUNDOS ANTES DE ABRIR NUEVA RONDA
+        try {
+            TimeUnit.SECONDS.sleep(2);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.err.println("⚠️ GiraPelotita interrumpida durante la espera antes de resetear");
+        }
+
+        // 7. RESETEAR Y ABRIR NUEVA RONDA
+        this.rule.resetNoVaMas();
+    }
+}

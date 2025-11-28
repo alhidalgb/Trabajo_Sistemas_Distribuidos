@@ -1,14 +1,16 @@
-package servidor;
+package servidor.red;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.*;
 
-import logicaRuleta.ActualizarBD;
-import logicaRuleta.AtenderJugador;
-import logicaRuleta.ServicioRuletaServidor;
+import logicaRuleta.core.AtenderJugador;
+import logicaRuleta.core.ServicioRuletaServidor;
 import modeloDominio.Jugador;
+import servidor.persistencia.ActualizarBD;
+import servidor.persistencia.BDJugadores;
+import servidor.persistencia.XMLServidor;
 
 import java.util.*;
 

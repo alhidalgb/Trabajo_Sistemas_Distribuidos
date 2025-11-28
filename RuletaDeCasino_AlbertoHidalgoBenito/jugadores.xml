@@ -16,7 +16,7 @@
         <saldo>400.0</saldo>
     </jugador>
     <jugador id="neymar">
-        <saldo>47000.0</saldo>
+        <saldo>34734.0</saldo>
     </jugador>
     <jugador id="volcan">
         <saldo>7100.0</saldo>
@@ -388,7 +388,7 @@
         <saldo>6200.0</saldo>
     </jugador>
     <jugador id="loki">
-        <saldo>900.0</saldo>
+        <saldo>200.0</saldo>
     </jugador>
     <jugador id="freya">
         <saldo>6400.0</saldo>
@@ -713,5 +713,11 @@
     </jugador>
     <jugador id="trueno">
         <saldo>6.9696969696E10</saldo>
+    </jugador>
+    <jugador id="asdfsd">
+        <saldo>11000.0</saldo>
+    </jugador>
+    <jugador id="nunu">
+        <saldo>9923.0</saldo>
     </jugador>
 </jugadores>

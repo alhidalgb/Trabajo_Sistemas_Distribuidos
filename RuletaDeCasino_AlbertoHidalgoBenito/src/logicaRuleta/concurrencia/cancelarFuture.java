@@ -1,4 +1,4 @@
-package logicaRuleta;
+package logicaRuleta.concurrencia;
 
 import java.util.List;
 import java.util.concurrent.Future;
