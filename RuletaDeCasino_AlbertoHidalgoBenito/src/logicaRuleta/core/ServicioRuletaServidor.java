@@ -27,23 +27,99 @@ import modeloDominio.Casilla;
 import modeloDominio.Jugador;
 import servidor.persistencia.ActualizarBD;
 
+/**
+ * Clase ServicioRuletaServidor
+ * ----------------------------
+ * Servicio central que coordina toda la lógica del casino de ruleta.
+ * Gestiona jugadores, sesiones, apuestas, rondas y sincronización entre hilos.
+ *
+ * RESPONSABILIDADES:
+ *  - Gestión de jugadores: registro, inicio de sesión, desconexión.
+ *  - Control de rondas: apertura/cierre de mesa (VaMas/NoVaMas).
+ *  - Gestión de apuestas: validación, almacenamiento y reparto de premios.
+ *  - Sincronización: coordinación entre múltiples jugadores usando latches y barriers.
+ *  - Persistencia: actualización de datos en XML mediante ActualizarBD.
+ *
+ * CONCURRENCIA:
+ *  - Thread-safe: utiliza ConcurrentHashMap y listas sincronizadas.
+ *  - Pool de hilos: ejecuta tareas concurrentes (búsquedas, premios, comunicación).
+ *  - Sincronización: CountDownLatch para VaMas/NoVaMas, CyclicBarrier para premios/casillas.
+ *
+ * FLUJO DE RONDA:
+ *  1. resetNoVaMas() → Abre mesa, jugadores pueden apostar.
+ *  2. NoVaMas() → Cierra mesa, se genera número ganador.
+ *  3. repartirPremio() → Calcula y entrega ganancias.
+ *  4. mandarCasilla() → Comunica resultado a todos los jugadores.
+ *  5. Vuelta al paso 1.
+ */
 public class ServicioRuletaServidor {
 
-	private final ExecutorService poolServer;
-	private final List<Jugador> jugadoresSesion;
+    // --- ATRIBUTOS ---
+    
+    /**
+     * Pool de hilos del servidor para tareas concurrentes.
+     * - Búsquedas de jugadores (GetIDHilos).
+     * - Reparto de premios (MandarPremios).
+     * - Comunicación de casilla ganadora (MandarCasillaGanadora).
+     * - Actualización de BD en segundo plano (ActualizarBD).
+     */
+    private final ExecutorService poolServer;
+    
+    /**
+     * Lista de todos los jugadores registrados en el sistema (con o sin sesión activa).
+     * Sincronizada para acceso concurrente seguro.
+     */
+    private final List<Jugador> jugadoresSesion;
+    
+    /**
+     * Mapa que asocia cada jugador con sus apuestas en la ronda actual.
+     * ConcurrentHashMap para escrituras thread-safe.
+     * Las listas de apuestas son synchronized para operaciones atómicas.
+     */
     private Map<Jugador, List<Apuesta>> jugadorApuestas;
     
-    //De eseta lista solo voy a añadir y borrar, entoces con haccerla threadSafe ya no me tengo que preocupar de hacer synchronized los metodos.
+    /**
+     * Lista de jugadores con conexión activa (socket abierto).
+     * De esta lista solo se añade y borra, con hacerla threadSafe ya no me tengo que preocupar 
+     * de hacer synchronized los métodos.
+     */
     private List<Jugador> jugadoresConexion;
     
-    //private ExecutorService pool;
-    
+    /**
+     * Latch que se desbloquea cuando la mesa cierra (NoVaMas).
+     * Los jugadores esperan en este latch para recibir el resultado de la ronda.
+     */
     private CountDownLatch noVaMas;
+    
+    /**
+     * Latch que se desbloquea cuando la mesa abre (resetNoVaMas).
+     * Los jugadores esperan en este latch para empezar a apostar.
+     */
     private CountDownLatch VaMas;
     
-    private boolean isNoVaMas; 
+    /**
+     * Flag que indica si la mesa está cerrada (true = no se aceptan apuestas).
+     * Consultado por los hilos de jugadores antes de añadir apuestas.
+     */
+    private boolean isNoVaMas;
+
+    // --- CONSTRUCTORES ---
     
-    
+    /**
+     * Constructor con lista de jugadores y pool personalizado.
+     *
+     * PRE:
+     *  - jugadoresSesion != null
+     *  - pool != null
+     *
+     * POST:
+     *  - El servicio está listo para operar.
+     *  - Los latches están inicializados en estado bloqueado.
+     *  - La mesa está cerrada (isNoVaMas = false inicialmente, pero VaMas bloqueado).
+     *
+     * @param jugadoresSesion Lista de jugadores existentes (cargados de BD).
+     * @param pool            Pool de hilos personalizado.
+     */
     public ServicioRuletaServidor(List<Jugador> jugadoresSesion, ExecutorService pool) {
         this.noVaMas = new CountDownLatch(1);
         this.VaMas = new CountDownLatch(1);
@@ -52,9 +128,17 @@ public class ServicioRuletaServidor {
         this.jugadoresSesion = Collections.synchronizedList(jugadoresSesion);
         this.jugadorApuestas = new ConcurrentHashMap<>();
         this.jugadoresConexion = Collections.synchronizedList(new ArrayList<>());
-        this.poolServer=pool;
+        this.poolServer = pool;
     }
     
+    /**
+     * Constructor por defecto (sin jugadores previos).
+     *
+     * POST:
+     *  - El servicio está listo para operar.
+     *  - Crea un CachedThreadPool automáticamente.
+     *  - Listas vacías de jugadores y apuestas.
+     */
     public ServicioRuletaServidor() {
         this.noVaMas = new CountDownLatch(1);
         this.VaMas = new CountDownLatch(1);
@@ -63,21 +147,60 @@ public class ServicioRuletaServidor {
         this.jugadoresSesion = Collections.synchronizedList(new ArrayList<>());
         this.jugadorApuestas = new ConcurrentHashMap<>();
         this.jugadoresConexion = Collections.synchronizedList(new ArrayList<>());
-        this.poolServer=Executors.newCachedThreadPool();
+        this.poolServer = Executors.newCachedThreadPool();
     }
 
+    // --- GETTERS / SETTERS ---
     
-    // Getters/Setters
+    /**
+     * Obtiene la lista de jugadores registrados.
+     *
+     * POST: Retorna lista sincronizada (thread-safe para iteración con synchronized).
+     *
+     * @return Lista sincronizada de jugadores.
+     */
+    public List<Jugador> getListJugadoresSesion() { 
+        return this.jugadoresSesion; 
+    }
     
-    //public ExecutorService getPool() { return this.pool; }    
-    //public void setPool(ExecutorService pool) { this.pool = pool; }
+    /**
+     * Obtiene el mapa de apuestas de la ronda actual.
+     *
+     * POST: Retorna referencia directa al ConcurrentHashMap (thread-safe).
+     *
+     * @return Mapa jugador → lista de apuestas.
+     */
+    public Map<Jugador, List<Apuesta>> getJugadorApuestas() { 
+        return this.jugadorApuestas; 
+    }
     
-    public List<Jugador> getListJugadoresSesion() { return this.jugadoresSesion; }
+    /**
+     * Reemplaza el mapa de apuestas (uso interno).
+     *
+     * PRE: m != null
+     * POST: El mapa interno se reemplaza por el nuevo.
+     *
+     * @param m Nuevo mapa de apuestas.
+     */
+    public void setJugadorApuestas(Map<Jugador, List<Apuesta>> m) { 
+        this.jugadorApuestas = m; 
+    }
     
-    
-    public Map<Jugador, List<Apuesta>> getJugadorApuestas() { return this.jugadorApuestas; }
-    public void setJugadorApuestas(Map<Jugador, List<Apuesta>> m) { this.jugadorApuestas = m; }
-    
+    /**
+     * Crea una copia defensiva del mapa de apuestas.
+     * Útil para persistencia o cálculos sin afectar el original.
+     *
+     * PRE: Ninguna.
+     * POST:
+     *  - Retorna un HashMap nuevo con copias de las listas de apuestas.
+     *  - Las modificaciones en la copia NO afectan al original.
+     *
+     * SINCRONIZACIÓN:
+     *  - Toma un snapshot del mapa para evitar ConcurrentModificationException.
+     *  - Copia cada lista de apuestas de forma atómica (synchronized).
+     *
+     * @return Copia profunda del mapa de apuestas.
+     */
     public Map<Jugador, List<Apuesta>> getCopiaJugadorApuestas() {
         // Foto del mapa: referencias coherentes en un instante
         Map<Jugador, List<Apuesta>> foto;
@@ -96,14 +219,28 @@ public class ServicioRuletaServidor {
         return copia;
     }
 
+    // --- CONTROL DE RONDAS ---
     
-    // CONTROL DE RONDAS
+    /**
+     * Reinicia el estado de la mesa para una nueva ronda.
+     * Abre la mesa y permite que los jugadores empiecen a apostar.
+     *
+     * PRE: Debe llamarse DESPUÉS de NoVaMas() y reparto de premios.
+     * POST:
+     *  - isNoVaMas = false → mesa abierta.
+     *  - jugadorApuestas vacío → nuevas apuestas para la ronda.
+     *  - noVaMas reiniciado → bloqueado hasta próximo cierre.
+     *  - VaMas desbloqueado → jugadores pueden entrar a la mesa.
+     *
+     * SINCRONIZACIÓN:
+     *  - Los hilos bloqueados en VaMasAwait() se desbloquean.
+     */
     public void resetNoVaMas() {
-        // Limpiar apuestas de la ronda
+        // Limpiar apuestas de la ronda anterior
         this.jugadorApuestas.clear();
         this.isNoVaMas = false;
 
-        // Reiniciar latch de noVaMas
+        // Reiniciar latch de noVaMas para la próxima ronda
         this.noVaMas = new CountDownLatch(1);
 
         // Desbloquear jugadores que estaban esperando VaMas
@@ -112,6 +249,19 @@ public class ServicioRuletaServidor {
         }
     }
 
+    /**
+     * Cierra la mesa y detiene la aceptación de apuestas.
+     * Se llama cuando el crupier decide girar la ruleta.
+     *
+     * PRE: Debe llamarse DESPUÉS de un período de apuestas abiertas.
+     * POST:
+     *  - isNoVaMas = true → no se aceptan más apuestas.
+     *  - noVaMas desbloqueado → jugadores reciben resultado.
+     *  - VaMas reiniciado → bloqueado hasta resetNoVaMas().
+     *
+     * SINCRONIZACIÓN:
+     *  - Los hilos bloqueados en noVaMasAwait() se desbloquean.
+     */
     public void NoVaMas() {
         this.isNoVaMas = true;
 
@@ -124,96 +274,149 @@ public class ServicioRuletaServidor {
         this.VaMas = new CountDownLatch(1);
     }
 
+    /**
+     * Espera a que la mesa cierre (bloquea el hilo).
+     * Los jugadores llaman esto después de terminar sus apuestas.
+     *
+     * PRE: El hilo debe estar en estado de juego (después de VaMasAwait).
+     * POST: Se desbloquea cuando NoVaMas() es llamado.
+     *
+     * @throws InterruptedException Si el hilo es interrumpido durante la espera.
+     */
     public void noVaMasAwait() throws InterruptedException {
         if (this.noVaMas != null) {
             this.noVaMas.await();
         }
     }
 
+    /**
+     * Espera a que la mesa abra (bloquea el hilo).
+     * Los jugadores llaman esto al entrar a la ruleta.
+     *
+     * PRE: El hilo debe haber solicitado jugar.
+     * POST: Se desbloquea cuando resetNoVaMas() es llamado.
+     *
+     * @throws InterruptedException Si el hilo es interrumpido durante la espera.
+     */
     public void VaMasAwait() throws InterruptedException {
         if (this.VaMas != null) {
             this.VaMas.await();
         }
     }
 
+    /**
+     * Consulta si la mesa está cerrada.
+     *
+     * POST: Retorna true si no se aceptan apuestas, false si la mesa está abierta.
+     *
+     * @return true si la mesa está cerrada, false en caso contrario.
+     */
     public boolean isNoVaMas() {
         return this.isNoVaMas;
     }
 
+    // --- GESTIÓN DE JUGADORES ---
     
-    // GESTIÓN DE JUGADORES
-    
+    /**
+     * Busca un jugador por su ID en la lista de sesiones.
+     * Utiliza búsqueda paralela dividiendo la lista en 30 particiones.
+     *
+     * PRE:
+     *  - iD != null && !iD.isEmpty()
+     *
+     * POST:
+     *  - Retorna el jugador si existe, null si no se encuentra.
+     *  - La búsqueda es thread-safe (copia defensiva de la lista).
+     *
+     * OPTIMIZACIÓN:
+     *  - Si N < 30, cada hilo busca en un rango pequeño.
+     *  - Si N >= 30, se divide en 30 particiones.
+     *  - Los Future se cancelan automáticamente tras encontrar el jugador.
+     *
+     * @param iD Identificador del jugador.
+     * @return Jugador encontrado o null.
+     */
     @SuppressWarnings({ "unchecked", "rawtypes" })
-	public Jugador getJugador(String iD) {
+    public Jugador getJugador(String iD) {
         // Caso de entrada inválida: id nulo o vacío
         if (iD == null || iD.trim().isEmpty()) {
-            
             // Devolvemos null silencioso → el llamador abortará la conexión
             return null;
         }
 
-        
-        
         synchronized (jugadoresSesion) {
-        	     	
-        	int N = this.jugadoresSesion.size();
-        	int particiones = 30;
-        	
-        	    	
-        	int in=0;
-        	int fin = 2;  
-        	
-        	if(30<N) {fin=N/30;}
-        	int suma = fin;
-        	
-        	List<Future<Jugador>> lfj=new ArrayList<>(particiones);
-        	
-			for(int i=0;i<particiones;i++) {
-				
-				
-				//Super importante mandar una copia, si mando la referencia original al estar en un bloque synchronize se bloquea todo.
-				//Mando un copia, como esta en un bloque sincrono de la lista no hay porblema, no se cambiara mientras la utilizo,
-				
-				lfj.add(this.poolServer.submit(new GetIDHilos(new ArrayList<>(this.jugadoresSesion),in,fin,iD)));
-				
-				
-				in +=suma;
-				fin += suma;
-				
-				if(fin>N) {fin=N;}
-				
-				
-			}
-			
-			Jugador sesion =null;
-			
-			for(Future<Jugador> jug : lfj) {
-				
-				try {
-					sesion=jug.get();
-					if(sesion!=null) {
-						break;
-					}
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (ExecutionException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-							
-				
-			}
-        	
-			//Cerramos los future para ahorra CPU.
-			this.poolServer.execute(new cancelarFuture(lfj));		
-			return sesion;
-        	      
+            int N = this.jugadoresSesion.size();
+            int particiones = 30;
+            
+            int in = 0;
+            int fin = 2;
+            
+            if (30 < N) {
+                fin = N / 30;
+            }
+            int suma = fin;
+            
+            List<Future<Jugador>> lfj = new ArrayList<>(particiones);
+            
+            for (int i = 0; i < particiones; i++) {
+                // Super importante mandar una copia, si mando la referencia original al estar en un bloque 
+                // synchronize se bloquea todo.
+                // Mando una copia, como esta en un bloque síncrono de la lista no hay problema, no se cambiará 
+                // mientras la utilizo.
+                lfj.add(this.poolServer.submit(new GetIDHilos(new ArrayList<>(this.jugadoresSesion), in, fin, iD)));
+                
+                in += suma;
+                fin += suma;
+                
+                if (fin > N) {
+                    fin = N;
+                }
+            }
+            
+            Jugador sesion = null;
+            
+            for (Future<Jugador> jug : lfj) {
+                try {
+                    sesion = jug.get();
+                    if (sesion != null) {
+                        break;
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+            }
+            
+            // Cerramos los future para ahorrar CPU.
+            this.poolServer.execute(new cancelarFuture(lfj));
+            return sesion;
         }
     }
 
-
-    
+    /**
+     * Establece la conexión de un jugador al servidor.
+     * Si el jugador ya tiene sesión activa, rechaza la nueva conexión.
+     *
+     * PRE:
+     *  - jug != null
+     *  - cliente != null && !cliente.isClosed()
+     *
+     * POST:
+     *  - Si el jugador NO tiene sesión activa:
+     *    → Se marca como conectado (isSesionIniciada = true).
+     *    → Se asocia el socket.
+     *    → Se añade a jugadoresConexion.
+     *  - Si el jugador YA tiene sesión activa:
+     *    → Se envía mensaje de error al nuevo cliente.
+     *    → Se cierra el socket duplicado.
+     *    → Se desconecta al jugador original (seguridad).
+     *
+     * @param jug     Jugador a conectar.
+     * @param cliente Socket del cliente.
+     * @throws IOException Si hay error al escribir en el socket.
+     */
     public void establecerConexion(Jugador jug, Socket cliente) throws IOException {
         synchronized (jug) { // Lock común por jugador
             if (!jug.isSesionIniciada()) {
@@ -231,12 +434,34 @@ public class ServicioRuletaServidor {
                 cliente.close();
 
                 // Desconexión controlada en el servidor
-                this.desconectarJugador(jug); // aquí llamamos al método de la rule
+                this.desconectarJugador(jug);
             }
         }
     }
 
-    
+    /**
+     * Registra un nuevo jugador en el sistema.
+     *
+     * PRE:
+     *  - name != null && !name.isEmpty()
+     *  - saldo >= 5 && saldo <= 10000
+     *  - cliente != null && !cliente.isClosed()
+     *
+     * POST:
+     *  - Si el nombre NO existe:
+     *    → Se crea el jugador con el saldo inicial.
+     *    → Se establece conexión.
+     *    → Se añade a jugadoresSesion.
+     *    → Retorna el jugador creado.
+     *  - Si el nombre YA existe:
+     *    → Retorna null.
+     *
+     * @param name    Nombre del jugador.
+     * @param saldo   Saldo inicial.
+     * @param cliente Socket del cliente.
+     * @return Jugador registrado o null si el nombre ya existe.
+     * @throws IOException Si hay error al establecer conexión.
+     */
     public Jugador registroSesionDefinitivo(String name, double saldo, Socket cliente) throws IOException {
         // Validación de entrada: nombre inválido → abortamos registro
         if (name == null || name.trim().isEmpty()) {
@@ -259,7 +484,25 @@ public class ServicioRuletaServidor {
         }
     }
 
-    
+    /**
+     * Inicia sesión de un jugador existente.
+     *
+     * PRE:
+     *  - name != null && !name.isEmpty()
+     *  - cliente != null && !cliente.isClosed()
+     *
+     * POST:
+     *  - Si el jugador existe:
+     *    → Se establece conexión (si no tiene sesión activa).
+     *    → Retorna el jugador.
+     *  - Si el jugador NO existe:
+     *    → Retorna null.
+     *
+     * @param name    Nombre del jugador.
+     * @param cliente Socket del cliente.
+     * @return Jugador autenticado o null si no existe.
+     * @throws IOException Si hay error al establecer conexión.
+     */
     public Jugador inicioSesionDefinitivo(String name, Socket cliente) throws IOException {
         // Validación de entrada: nombre inválido → abortamos inicio de sesión
         if (name == null || name.trim().isEmpty()) {
@@ -278,9 +521,34 @@ public class ServicioRuletaServidor {
         }
     }
 
+    // --- GESTIÓN DE APUESTAS ---
     
-    // GESTIÓN DE APUESTAS
-    
+    /**
+     * Añade una apuesta del jugador a la ronda actual.
+     *
+     * PRE:
+     *  - jug != null
+     *  - apuesta != null
+     *  - jug.getSaldo() >= apuesta.getCantidad()
+     *  - isNoVaMas == false (mesa abierta)
+     *
+     * POST:
+     *  - Si la apuesta es válida:
+     *    → Se añade a la lista del jugador.
+     *    → Se resta el importe del saldo.
+     *    → Retorna true.
+     *  - Si la apuesta NO es válida:
+     *    → Retorna false (no se modifica nada).
+     *
+     * VALIDACIONES:
+     *  - Mesa cerrada (isNoVaMas = true) → rechaza apuesta.
+     *  - Apuesta nula → rechaza apuesta.
+     *  - Saldo insuficiente → rechaza apuesta.
+     *
+     * @param jug     Jugador que apuesta.
+     * @param apuesta Apuesta a registrar.
+     * @return true si la apuesta fue aceptada, false en caso contrario.
+     */
     public boolean anadirApuesta(Jugador jug, Apuesta apuesta) {
         // NO ACEPTAR APUESTAS SI LA MESA ESTÁ CERRADA
         if (this.isNoVaMas) {
@@ -291,7 +559,6 @@ public class ServicioRuletaServidor {
             return false;
         }
 
-        //Hace falta que sea synchronized, ¿es logica esta siincronizacion?
         // Validar saldo suficiente antes de añadir
         if (jug.getSaldo() < apuesta.getCantidad()) {
             return false;
@@ -311,10 +578,30 @@ public class ServicioRuletaServidor {
         return add;
     }
 
-
+    /**
+     * Reparte premios a todos los jugadores que apostaron en la ronda.
+     * Utiliza un pool de hilos y CyclicBarrier para sincronizar el reparto.
+     *
+     * PRE:
+     *  - ganadora != null
+     *  - NoVaMas() ya fue llamado (mesa cerrada).
+     *
+     * POST:
+     *  - Se calcula la ganancia de cada jugador según sus apuestas.
+     *  - Se suma la ganancia al saldo del jugador.
+     *  - Se envía mensaje al cliente con la ganancia (si está conectado).
+     *  - Todos los hilos esperan en la barrera antes de actualizar saldos.
+     *
+     * CONCURRENCIA:
+     *  - Crea un pool de hilos del tamaño del número de jugadores.
+     *  - CyclicBarrier sincroniza el reparto (todos terminan al mismo tiempo).
+     *  - Timeout de 3 segundos para shutdown del pool.
+     *
+     * @param ganadora Casilla ganadora de la ronda.
+     */
     public void repartirPremio(Casilla ganadora) {
         if (this.jugadorApuestas.isEmpty()) {
-            //System.out.println("ℹ️ No hay apuestas para repartir.");
+            // No hay apuestas para repartir (silencioso)
             return;
         }
 
@@ -350,11 +637,28 @@ public class ServicioRuletaServidor {
             }
         }
     }
-    
 
-
-    
-    
+    /**
+     * Comunica la casilla ganadora a todos los jugadores conectados.
+     * Utiliza un pool de hilos y CyclicBarrier para sincronizar el envío.
+     *
+     * PRE:
+     *  - ganadora != null
+     *  - NoVaMas() ya fue llamado.
+     *
+     * POST:
+     *  - Todos los jugadores conectados reciben un mensaje con la casilla ganadora.
+     *  - Los jugadores desconectados son ignorados (no se interrumpe la ronda).
+     *  - Todos los hilos esperan en la barrera antes de enviar el mensaje.
+     *
+     * CONCURRENCIA:
+     *  - Snapshot de jugadoresConexion para evitar ConcurrentModificationException.
+     *  - Si un jugador se conecta DESPUÉS del snapshot, no participa en esta ronda.
+     *  - CyclicBarrier sincroniza el envío (todos envían al mismo tiempo).
+     *  - Timeout de 3 segundos para shutdown del pool.
+     *
+     * @param ganadora Casilla ganadora de la ronda.
+     */
     public void mandarCasilla(Casilla ganadora) {
         if (this.jugadoresConexion.isEmpty()) {
             return;
@@ -367,7 +671,6 @@ public class ServicioRuletaServidor {
 
             try {
                 for (Jugador j : this.jugadoresConexion) {
-                    // Mantengo tu clase MandarCasillaGanadora
                     poolCasilla.execute(new MandarCasillaGanadora(j.getConexion(), starter, ganadora));
                 }
 
@@ -392,7 +695,26 @@ public class ServicioRuletaServidor {
         }
     }
 
+    // --- DESCONEXIÓN ---
     
+    /**
+     * Desconecta un jugador de forma limpia.
+     *
+     * PRE: jug puede ser null (se valida internamente).
+     * POST:
+     *  - Se marca la sesión como cerrada (isSesionIniciada = false).
+     *  - Se cierra el socket del jugador.
+     *  - Se elimina de jugadoresConexion.
+     *  - Se actualiza la BD en segundo plano (ActualizarBD).
+     *
+     * CONCURRENCIA:
+     *  - Sincroniza sobre el jugador para evitar race conditions.
+     *  - No pasa nada por que se produzcan errores de carrera en la actualización de BD,
+     *    en el sentido de estar todo el rato sobreescribiendo, ya que al final la lista
+     *    jugadoresSesion siempre va a estar actualizada.
+     *
+     * @param jug Jugador a desconectar.
+     */
     public void desconectarJugador(Jugador jug) {
         if (jug == null) {
             return;
