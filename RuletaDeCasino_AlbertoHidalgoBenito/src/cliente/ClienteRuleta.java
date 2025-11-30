@@ -28,7 +28,7 @@ import java.util.concurrent.TimeoutException;
  *  - Se establece una conexión con el servidor.
  *  - Se reciben y muestran mensajes del servidor.
  *  - Se envían respuestas al servidor cuando son solicitadas.
- *  - Si la conexión se pierde, se informa al usuario y se cierra el socket.
+ *  - Si la conexión se pierde o el usuario no responde en 30s, se cierra el socket y el programa.
  */
 public class ClienteRuleta {
 
@@ -41,8 +41,6 @@ public class ClienteRuleta {
      *
      * @param ip     Dirección IP o hostname del servidor.
      * @param puerto Puerto TCP donde escucha el servidor.
-     * PRE: ip != null, puerto válido (>1024).
-     * POST: Se crea un socket conectado al servidor, o se informa de error si no se pudo conectar.
      */
     public ClienteRuleta(String ip, int puerto) {
         try {
@@ -55,20 +53,14 @@ public class ClienteRuleta {
     // --- LÓGICA DE NEGOCIO ---
     /**
      * Inicia la comunicación con el servidor.
-     * PRE: El socket debe estar conectado y no cerrado.
-     * POST:
-     *  - Se leen mensajes del servidor en bucle.
-     *  - Si el servidor solicita respuesta ("NECESITO RESPUESTA"), se espera entrada del usuario.
-     *  - El usuario tiene 30 segundos para responder; si no lo hace, se informa de timeout.
-     *  - Los mensajes informativos del servidor se muestran directamente en consola.
-     *  - Si la conexión se pierde, se informa y se cierra el socket.
+     * Si el usuario no responde en 30 segundos, se cierra la conexión y el programa termina.
      */
     public void IniciarCliente() {
-        if (socket == null || socket.isClosed()) return;
+        if (this.socket == null || this.socket.isClosed()) return;
 
         try (
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+            PrintWriter out = new PrintWriter(this.socket.getOutputStream(), true);
             BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in))
         ) {
             System.out.println("✅ Conectado al Casino. Esperando instrucciones...");
@@ -83,10 +75,13 @@ public class ClienteRuleta {
 
                     String respuesta = null;
                     try {
+                        // ⏳ Esperamos hasta 30 segundos
                         respuesta = future.get(30, TimeUnit.SECONDS);
                     } catch (TimeoutException e) {
-                        System.out.println("⏳ Tiempo de espera agotado (30s). No se recibió respuesta.");
+                        System.out.println("⏳ Tiempo de espera agotado (30s). Se cerrará la conexión.");
                         future.cancel(true);
+                        this.cerrarConexion();
+                        return; // salimos del método → termina el cliente
                     } catch (Exception e) {
                         System.err.println("⚠️ Error leyendo respuesta: " + e.getMessage());
                     } finally {
@@ -106,7 +101,23 @@ public class ClienteRuleta {
         } catch (IOException e) {
             System.err.println("❌ Se ha perdido la conexión con el servidor.");
         } finally {
-            try { if (socket != null) socket.close(); } catch (IOException e) {}
+            this.cerrarConexion();
         }
+    }
+
+    // --- MÉTODO AUXILIAR ---
+    /**
+     * Cierra el socket y termina el programa.
+     */
+    private void cerrarConexion() {
+        try {
+            if (this.socket != null && !this.socket.isClosed()) {
+                this.socket.close();
+                System.out.println("🔒 Conexión cerrada con el servidor.");
+            }
+        } catch (IOException e) {
+            System.err.println("⚠️ Error cerrando socket: " + e.getMessage());
+        }
+        System.exit(0); // cerramos todo el programa
     }
 }

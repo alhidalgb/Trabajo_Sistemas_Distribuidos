@@ -328,7 +328,7 @@ public class ServicioRuletaServidor {
                 synchronized (entry.getValue()) {
                     copiaApuestas = new ArrayList<>(entry.getValue());
                 }
-                poolPremios.execute(new MandarPremios(entry.getKey(), copiaApuestas, ganadora, starter,this));
+                poolPremios.execute(new MandarPremios(entry.getKey(), copiaApuestas, ganadora, starter));
             }
 
             // Esperar a que todos los hilos de premios lleguen a la barrera
@@ -351,64 +351,7 @@ public class ServicioRuletaServidor {
         }
     }
     
-    
-    /**
-     * Calcula el premio de una apuesta concreta según la casilla ganadora.
-     *
-     * @param ganadora Casilla ganadora.
-     * @param apuesta  Apuesta del jugador.
-     * @return Importe ganado (0 si perdió).
-     */
-    public double calcularPremio(Casilla ganadora, Apuesta apuesta) {
-        double cantidad = apuesta.getCantidad();
-        String valorApostado = apuesta.getValor();
 
-        switch (apuesta.getTipo()) {
-            case NUMERO:
-                try {
-                    int numeroApostado = Integer.parseInt(valorApostado);
-                    if (numeroApostado == ganadora.getNumero()) {
-                        return cantidad * 36;
-                    }
-                } catch (NumberFormatException e) {
-                    System.err.println("⚠️ Error formato número: " + valorApostado);
-                }
-                break;
-
-            case COLOR:
-                if (ganadora.getNumero() != 0 &&
-                    valorApostado.equalsIgnoreCase(ganadora.getColor())) {
-                    return cantidad * 2;
-                }
-                break;
-
-            case PAR_IMPAR:
-                if (ganadora.getNumero() != 0) {
-                    boolean apostoPar = valorApostado.equalsIgnoreCase("PAR");
-                    if ((apostoPar && ganadora.getNumero() % 2 == 0) ||
-                        (!apostoPar && ganadora.getNumero() % 2 != 0)) {
-                        return cantidad * 2;
-                    }
-                }
-                break;
-
-            case DOCENA:
-                try {
-                    int docenaApostada = Integer.parseInt(valorApostado);
-                    if (docenaApostada == ganadora.getDocena()) {
-                        return cantidad * 3;
-                    }
-                } catch (NumberFormatException e) {
-                    System.err.println("⚠️ Error formato docena: " + valorApostado);
-                }
-                break;
-
-            default:
-                return 0;
-        }
-
-        return 0;
-    }
 
     
     

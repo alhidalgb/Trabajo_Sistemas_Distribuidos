@@ -100,11 +100,11 @@ public class Jugador implements Serializable {
 
     // --- GETTERS Y SETTERS (Persistencia / JAXB) ---
 
-    @XmlAttribute(name = "id")
+    @XmlAttribute(name = "id", required = true)
     public String getID() { return id; }
     public void setID(String id) { this.id = id; }
 
-    @XmlElement(name = "saldo")
+    @XmlElement(name = "saldo", required = true)
     public double getSaldo() { return saldo; }
     public void setSaldo(double saldo) { this.saldo = saldo; }
 

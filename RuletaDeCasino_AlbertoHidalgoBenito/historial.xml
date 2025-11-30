@@ -2,7 +2,7 @@
 <historial>
     <listapuestas fecha="2025-11-22" ganadora="0">
         <jugador id="pepe">
-            <apuesta cantidad="10.0" tipo="NUMERO" valor="7">Apuesta de la suerte</apuesta>
+            <apuesta cantidad="10.0" tipo="NUMERO" valor="7"/>
         </jugador>
         
         <jugador id="ana">
@@ -12,7 +12,7 @@
 
     <listapuestas fecha="2025-11-23" ganadora="6">
         <jugador id="pepe">
-            <apuesta cantidad="20.0" tipo="PAR_IMPAR" valor="PAR">Recuperando pérdidas</apuesta>
+            <apuesta cantidad="20.0" tipo="PAR_IMPAR" valor="PAR"/>
         </jugador>
     </listapuestas>
 <listapuestas fecha="Tue Nov 25 18:29:08 CET 2025" ganadora="21"/>
@@ -444,4 +444,46 @@
             <apuesta cantidad="22.0" tipo="COLOR" valor="ROJO"/>
         </jugador>
     </listapuestas>
+<listapuestas fecha="Sat Nov 29 18:14:32 CET 2025" ganadora="[Número=6, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Sat Nov 29 18:14:56 CET 2025" ganadora="[Número=25, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Sat Nov 29 18:15:20 CET 2025" ganadora="[Número=1, Color=ROJO, Docena=1]"/>
+<listapuestas fecha="Sat Nov 29 18:15:44 CET 2025" ganadora="[Número=0, Color=VERDE, Docena=0]"/>
+<listapuestas fecha="Sat Nov 29 18:17:53 CET 2025" ganadora="[Número=20, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Sat Nov 29 18:18:17 CET 2025" ganadora="[Número=35, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Sat Nov 29 18:18:41 CET 2025" ganadora="[Número=9, Color=ROJO, Docena=1]"/>
+<listapuestas fecha="Sat Nov 29 18:20:08 CET 2025" ganadora="[Número=9, Color=ROJO, Docena=1]"/>
+<listapuestas fecha="Sat Nov 29 18:20:32 CET 2025" ganadora="[Número=22, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Sat Nov 29 18:21:39 CET 2025" ganadora="[Número=33, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Sat Nov 29 18:22:48 CET 2025" ganadora="[Número=0, Color=VERDE, Docena=0]"/>
+<listapuestas fecha="Sat Nov 29 18:30:16 CET 2025" ganadora="[Número=32, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Sat Nov 29 19:10:33 CET 2025" ganadora="[Numero=18, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Sat Nov 29 19:10:57 CET 2025" ganadora="[Numero=24, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Sat Nov 29 19:11:21 CET 2025" ganadora="[Numero=16, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Sat Nov 29 19:11:45 CET 2025" ganadora="[Numero=16, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Sat Nov 29 19:12:09 CET 2025" ganadora="[Numero=29, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Sat Nov 29 19:12:33 CET 2025" ganadora="[Numero=32, Color=ROJO, Docena=3]">
+        <jugador id="nunu">
+            <apuesta cantidad="50.0" tipo="NUMERO" valor="0"/>
+        </jugador>
+    </listapuestas>
+<listapuestas fecha="Sat Nov 29 19:12:57 CET 2025" ganadora="[Numero=10, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Sat Nov 29 19:13:21 CET 2025" ganadora="[Numero=14, Color=ROJO, Docena=2]">
+        <jugador id="nunu">
+            <apuesta cantidad="50.0" tipo="COLOR" valor="ROJO"/>
+        </jugador>
+    </listapuestas>
+<listapuestas fecha="Sat Nov 29 19:13:45 CET 2025" ganadora="[Numero=27, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Sat Nov 29 19:14:09 CET 2025" ganadora="[Numero=19, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Sat Nov 29 19:14:33 CET 2025" ganadora="[Numero=19, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Sat Nov 29 19:14:57 CET 2025" ganadora="[Numero=19, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Sat Nov 29 19:15:21 CET 2025" ganadora="[Numero=26, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Sat Nov 29 19:15:45 CET 2025" ganadora="[Numero=18, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Sat Nov 29 19:16:09 CET 2025" ganadora="[Numero=24, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Sat Nov 29 19:16:33 CET 2025" ganadora="[Numero=35, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Sat Nov 29 19:16:57 CET 2025" ganadora="[Numero=2, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Sat Nov 29 19:17:21 CET 2025" ganadora="[Numero=15, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Sat Nov 29 19:17:45 CET 2025" ganadora="[Numero=9, Color=ROJO, Docena=1]"/>
+<listapuestas fecha="Sat Nov 29 19:18:09 CET 2025" ganadora="[Numero=12, Color=ROJO, Docena=1]"/>
+<listapuestas fecha="Sat Nov 29 19:18:33 CET 2025" ganadora="[Numero=4, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Sun Nov 30 14:01:11 CET 2025" ganadora="[Numero=21, Color=ROJO, Docena=2]"/>
 </historial>

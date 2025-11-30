@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter; // Usamos esto para facilitar los envíos
 import java.net.Socket;
+import java.net.SocketException;
 
 import modeloDominio.Apuesta;
 import modeloDominio.Jugador;
@@ -38,6 +39,10 @@ public class AtenderJugador implements Runnable {
             PrintWriter out = new PrintWriter(cliente.getOutputStream(), true) // true = AutoFlush
         ) {
             
+        	//El servidor se puede quedar atascado leyendo al cliente, lo que provocara un cliente fantasma. El cliente solo tiene 30 segundos para mandar un mensaje sino se cerrera la conexion. Entonces
+        	// el servidor solo tiene 45 segundos para intentar leer al cliente (tiene 15  segundos de gracia) sino cerra conexion.
+        	this.cliente.setSoTimeout(45000);
+        	
             // --- FASE 1: LOGIN / REGISTRO ---
             boolean logueado = false;
             
@@ -96,7 +101,9 @@ public class AtenderJugador implements Runnable {
                     }
                 }
             }
-
+            
+            
+        } catch (SocketException e) {System.out.println("El servidor estuvo mucho tiempo atascado intentando leer al cliente: " + e.getMessage());
         } catch (IOException e) {
         	
         	//Este mensaje es para el servidor.
@@ -221,7 +228,11 @@ public class AtenderJugador implements Runnable {
         } catch (IOException e) {
             out.println("❌ Error de comunicación con el cliente. Se cerrará la conexión.");
             this.desconectar();
+        } catch (NullPointerException e) {
+        	out.println("❌ Error de comunicación con el cliente. Se cerrará la conexión.");
+            this.desconectar();
         }
+        
     }
 
     

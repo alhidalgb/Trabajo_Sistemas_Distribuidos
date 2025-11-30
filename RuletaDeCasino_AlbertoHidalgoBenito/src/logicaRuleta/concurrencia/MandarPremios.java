@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
-import logicaRuleta.core.ServicioRuletaServidor;
+import logicaRuleta.core.RuletaUtils;
 import modeloDominio.Apuesta;
 import modeloDominio.Casilla;
 import modeloDominio.Jugador;
@@ -38,7 +38,6 @@ public class MandarPremios implements Runnable {
     private final Casilla ganadora;
     private final CyclicBarrier starter;
     private final Jugador jugador;
-    private final ServicioRuletaServidor rule;
 
     // --- CONSTRUCTOR ---
     /**
@@ -48,14 +47,12 @@ public class MandarPremios implements Runnable {
      * @param listApuesta Lista de apuestas del jugador.
      * @param ganadora    Casilla ganadora de la ronda.
      * @param starter     Barrera de sincronización entre hilos.
-     * @param rule        ServicioRuletaServidor que contiene la lógica de cálculo de premios.
      */
-    public MandarPremios(Jugador jug, List<Apuesta> listApuesta, Casilla ganadora, CyclicBarrier starter, ServicioRuletaServidor rule) {
+    public MandarPremios(Jugador jug, List<Apuesta> listApuesta, Casilla ganadora, CyclicBarrier starter) {
         this.ganadora = ganadora;
         this.listApuesta = listApuesta;
         this.starter = starter;
         this.jugador = jug;
-        this.rule = rule;
     }
 
     // --- LÓGICA DE NEGOCIO ---
@@ -70,7 +67,7 @@ public class MandarPremios implements Runnable {
 
         // 1. Calcular las ganancias de todas las apuestas
         for (Apuesta ap : listApuesta) {
-            ganancia += rule.calcularPremio(ganadora, ap);
+            ganancia += RuletaUtils.calcularPremio(ganadora, ap);
         }
 
         // 2. Intentar establecer conexión con el jugador

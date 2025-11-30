@@ -49,7 +49,7 @@ public class ListaJugadores {
      *
      * @return Lista de jugadores.
      */
-    @XmlElement(name = "jugador")
+    @XmlElement(name = "jugador", required = true)
     public List<Jugador> getLista() { 
         return lista; 
     }

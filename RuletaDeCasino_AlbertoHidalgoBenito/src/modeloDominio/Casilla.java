@@ -94,7 +94,7 @@ public class Casilla {
      */
     @Override
     public String toString() {
-        return "[Número=" + numero + ", Color=" + color.toString() + ", Docena=" + this.getDocena() + "]";
+        return "[Numero=" + numero + ", Color=" + color.toString() + ", Docena=" + this.getDocena() + "]";
     }
 
     /**
