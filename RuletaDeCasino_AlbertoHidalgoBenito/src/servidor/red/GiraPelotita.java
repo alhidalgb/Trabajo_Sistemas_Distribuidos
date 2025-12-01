@@ -1,6 +1,7 @@
 package servidor.red;
 
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -60,6 +61,12 @@ public class GiraPelotita implements Runnable {
      */
     @Override
     public void run() {
+    	
+    		
+    		//MEJORAS: queiro que antes de que se reseete el NO VA MAS, se envie el mensaje. Lo que me ocurre ahora es que si estoy esperando a que se abra la mesa,
+    		// se muestra primero el menu. Yo quiero que aparezca la casilla y las ganancias.
+    		
+    	
         // 1. CERRAR APUESTAS
         this.rule.NoVaMas();
 
@@ -71,13 +78,17 @@ public class GiraPelotita implements Runnable {
             System.err.println("⚠️ GiraPelotita interrumpida durante la espera de cierre de apuestas");
         }
 
+        
         // 3. GENERAR NÚMERO GANADOR
         int numeroGanador = new Random().nextInt(37); // 0-36
         Casilla ganadora = new Casilla(numeroGanador);
 
+        
         // 4. REPARTIR PREMIOS Y COMUNICAR CASILLA
-        this.rule.mandarCasilla(ganadora);
-        this.rule.repartirPremio(ganadora);
+        
+        CountDownLatch count = new CountDownLatch(2);
+        this.rule.mandarCasilla(ganadora,count);
+        this.rule.repartirPremio(ganadora,count);
 
         // 5. GUARDAR EN XML (en paralelo)
         this.pool.execute(new guardarApuestas(this.rule.getCopiaJugadorApuestas(), ganadora, this.xml));
@@ -90,6 +101,12 @@ public class GiraPelotita implements Runnable {
             System.err.println("⚠️ GiraPelotita interrumpida durante la espera antes de resetear");
         }
 
+        try {
+			count.await();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         // 7. RESETEAR Y ABRIR NUEVA RONDA
         this.rule.resetNoVaMas();
     }

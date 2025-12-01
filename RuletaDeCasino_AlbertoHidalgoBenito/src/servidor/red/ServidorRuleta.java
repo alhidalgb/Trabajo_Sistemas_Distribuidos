@@ -53,9 +53,15 @@ public class ServidorRuleta {
         for (Jugador j : jugadoresConSesion) {
             System.out.println("Jugador cargado: " + j);
         }
+        
+        System.out.println(jugadoresConSesion.size());
 
         // Pool de hilos para atender clientes
-        ExecutorService pool = Executors.newCachedThreadPool();
+        
+        //MEJORA: ¿es mejor .newCachedThreadPool() o .newFixedThreadPool(Runtime.getRuntime().availableProcessors()) ?
+        
+        
+        ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         
         // Inicializar lógica de ruleta con jugadores cargados
         ServicioRuletaServidor rule = new ServicioRuletaServidor(jugadoresConSesion, pool);

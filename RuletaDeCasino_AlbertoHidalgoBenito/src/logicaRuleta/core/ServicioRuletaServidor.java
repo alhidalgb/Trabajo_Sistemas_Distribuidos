@@ -336,6 +336,12 @@ public class ServicioRuletaServidor {
      * @param iD Identificador del jugador.
      * @return Jugador encontrado o null.
      */
+    
+    
+    
+    //MEJORAS: quiero saber si hay una forma mas eficiente de implementar este metodo, algo que en cuento encuentre el Jugador, se cancele todo al instante.
+    
+    
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public Jugador getJugador(String iD) {
         // Caso de entrada inválida: id nulo o vacío
@@ -599,9 +605,10 @@ public class ServicioRuletaServidor {
      *
      * @param ganadora Casilla ganadora de la ronda.
      */
-    public void repartirPremio(Casilla ganadora) {
+    public void repartirPremio(Casilla ganadora,CountDownLatch count) {
         if (this.jugadorApuestas.isEmpty()) {
             // No hay apuestas para repartir (silencioso)
+        		count.countDown();
             return;
         }
 
@@ -626,6 +633,7 @@ public class ServicioRuletaServidor {
         } catch (BrokenBarrierException e) {
             System.err.println("⚠️ Error en la barrera de premios: " + e.getMessage());
         } finally {
+            count.countDown();
             poolPremios.shutdown();
             try {
                 if (!poolPremios.awaitTermination(3, TimeUnit.SECONDS)) {
@@ -635,6 +643,7 @@ public class ServicioRuletaServidor {
                 poolPremios.shutdownNow();
                 Thread.currentThread().interrupt();
             }
+            
         }
     }
 
@@ -659,8 +668,9 @@ public class ServicioRuletaServidor {
      *
      * @param ganadora Casilla ganadora de la ronda.
      */
-    public void mandarCasilla(Casilla ganadora) {
+    public void mandarCasilla(Casilla ganadora,CountDownLatch count) {
         if (this.jugadoresConexion.isEmpty()) {
+        		count.countDown();
             return;
         }
 
@@ -682,6 +692,7 @@ public class ServicioRuletaServidor {
             } catch (BrokenBarrierException e) {
                 System.err.println("⚠️ Error en la barrera de casillas: " + e.getMessage());
             } finally {
+            		count.countDown();
                 poolCasilla.shutdown();
                 try {
                     if (!poolCasilla.awaitTermination(3, TimeUnit.SECONDS)) {
@@ -691,6 +702,8 @@ public class ServicioRuletaServidor {
                     poolCasilla.shutdownNow();
                     Thread.currentThread().interrupt();
                 }
+                
+                
             }
         }
     }

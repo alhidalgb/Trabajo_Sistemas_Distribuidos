@@ -510,4 +510,139 @@
 <listapuestas fecha="Sun Nov 30 15:16:53 CET 2025" ganadora="[Numero=1, Color=ROJO, Docena=1]"/>
 <listapuestas fecha="Sun Nov 30 15:17:17 CET 2025" ganadora="[Numero=17, Color=NEGRO, Docena=2]"/>
 <listapuestas fecha="Sun Nov 30 15:25:49 CET 2025" ganadora="[Numero=35, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Sun Nov 30 19:26:44 CET 2025" ganadora="[Numero=16, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Sun Nov 30 19:27:08 CET 2025" ganadora="[Numero=15, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Sun Nov 30 19:27:32 CET 2025" ganadora="[Numero=26, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Sun Nov 30 19:27:56 CET 2025" ganadora="[Numero=5, Color=ROJO, Docena=1]">
+        <jugador id="nunu">
+            <apuesta cantidad="30.0" tipo="COLOR" valor="ROJO"/>
+        </jugador>
+    </listapuestas>
+<listapuestas fecha="Sun Nov 30 19:28:20 CET 2025" ganadora="[Numero=8, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Sun Nov 30 19:28:44 CET 2025" ganadora="[Numero=10, Color=NEGRO, Docena=1]">
+        <jugador id="nunu">
+            <apuesta cantidad="20.0" tipo="NUMERO" valor="15"/>
+        </jugador>
+    </listapuestas>
+<listapuestas fecha="Sun Nov 30 19:29:08 CET 2025" ganadora="[Numero=13, Color=NEGRO, Docena=2]">
+        <jugador id="nunu">
+            <apuesta cantidad="30.0" tipo="PAR_IMPAR" valor="PAR"/>
+        </jugador>
+    </listapuestas>
+<listapuestas fecha="Sun Nov 30 19:29:32 CET 2025" ganadora="[Numero=4, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Sun Nov 30 19:29:56 CET 2025" ganadora="[Numero=11, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Sun Nov 30 19:30:20 CET 2025" ganadora="[Numero=6, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Sun Nov 30 19:30:44 CET 2025" ganadora="[Numero=11, Color=NEGRO, Docena=1]">
+        <jugador id="nunu">
+            <apuesta cantidad="600.0" tipo="NUMERO" valor="0"/>
+        </jugador>
+    </listapuestas>
+<listapuestas fecha="Sun Nov 30 19:31:08 CET 2025" ganadora="[Numero=31, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 17:51:51 CET 2025" ganadora="[Numero=11, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 17:52:15 CET 2025" ganadora="[Numero=28, Color=NEGRO, Docena=3]">
+        <jugador id="neymar">
+            <apuesta cantidad="3000.0" tipo="NUMERO" valor="0"/>
+            <apuesta cantidad="6000.0" tipo="DOCENA" valor="3"/>
+        </jugador>
+    </listapuestas>
+<listapuestas fecha="Mon Dec 01 18:09:49 CET 2025" ganadora="[Numero=22, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 18:15:11 CET 2025" ganadora="[Numero=0, Color=VERDE, Docena=0]"/>
+<listapuestas fecha="Mon Dec 01 18:15:35 CET 2025" ganadora="[Numero=34, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 18:15:59 CET 2025" ganadora="[Numero=6, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 18:16:23 CET 2025" ganadora="[Numero=7, Color=ROJO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 18:16:47 CET 2025" ganadora="[Numero=7, Color=ROJO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 18:17:11 CET 2025" ganadora="[Numero=27, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 18:17:35 CET 2025" ganadora="[Numero=31, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 18:17:59 CET 2025" ganadora="[Numero=9, Color=ROJO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 18:18:24 CET 2025" ganadora="[Numero=22, Color=NEGRO, Docena=2]">
+        <jugador id="mery">
+            <apuesta cantidad="600.0" tipo="NUMERO" valor="0"/>
+        </jugador>
+    </listapuestas>
+<listapuestas fecha="Mon Dec 01 18:18:48 CET 2025" ganadora="[Numero=2, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 18:19:12 CET 2025" ganadora="[Numero=29, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 18:19:36 CET 2025" ganadora="[Numero=23, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 18:20:00 CET 2025" ganadora="[Numero=26, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 18:20:24 CET 2025" ganadora="[Numero=6, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 18:20:48 CET 2025" ganadora="[Numero=13, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 18:21:12 CET 2025" ganadora="[Numero=2, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 18:21:56 CET 2025" ganadora="[Numero=28, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 18:22:21 CET 2025" ganadora="[Numero=3, Color=ROJO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 23:22:27 CET 2025" ganadora="[Numero=16, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:22:51 CET 2025" ganadora="[Numero=6, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 23:23:15 CET 2025" ganadora="[Numero=9, Color=ROJO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 23:23:45 CET 2025" ganadora="[Numero=16, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:24:09 CET 2025" ganadora="[Numero=23, Color=ROJO, Docena=2]">
+        <jugador id="neymar">
+            <apuesta cantidad="44.0" tipo="NUMERO" valor="0"/>
+        </jugador>
+    </listapuestas>
+<listapuestas fecha="Mon Dec 01 23:24:33 CET 2025" ganadora="[Numero=33, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:26:41 CET 2025" ganadora="[Numero=13, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:27:05 CET 2025" ganadora="[Numero=17, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:27:29 CET 2025" ganadora="[Numero=25, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:27:53 CET 2025" ganadora="[Numero=22, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:28:17 CET 2025" ganadora="[Numero=24, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:28:41 CET 2025" ganadora="[Numero=4, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 23:29:05 CET 2025" ganadora="[Numero=12, Color=ROJO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 23:29:29 CET 2025" ganadora="[Numero=33, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:29:53 CET 2025" ganadora="[Numero=10, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 23:30:17 CET 2025" ganadora="[Numero=3, Color=ROJO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 23:32:26 CET 2025" ganadora="[Numero=36, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:32:50 CET 2025" ganadora="[Numero=2, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 23:33:14 CET 2025" ganadora="[Numero=30, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:34:10 CET 2025" ganadora="[Numero=8, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 23:34:34 CET 2025" ganadora="[Numero=35, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:34:58 CET 2025" ganadora="[Numero=27, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:35:22 CET 2025" ganadora="[Numero=0, Color=VERDE, Docena=0]"/>
+<listapuestas fecha="Mon Dec 01 23:41:15 CET 2025" ganadora="[Numero=0, Color=VERDE, Docena=0]"/>
+<listapuestas fecha="Mon Dec 01 23:41:40 CET 2025" ganadora="[Numero=18, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:42:04 CET 2025" ganadora="[Numero=31, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:42:28 CET 2025" ganadora="[Numero=34, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:42:52 CET 2025" ganadora="[Numero=12, Color=ROJO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 23:43:16 CET 2025" ganadora="[Numero=7, Color=ROJO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 23:43:40 CET 2025" ganadora="[Numero=17, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:44:04 CET 2025" ganadora="[Numero=23, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:44:28 CET 2025" ganadora="[Numero=33, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:44:52 CET 2025" ganadora="[Numero=18, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:45:16 CET 2025" ganadora="[Numero=31, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:45:40 CET 2025" ganadora="[Numero=15, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:46:04 CET 2025" ganadora="[Numero=18, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:46:28 CET 2025" ganadora="[Numero=25, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:46:52 CET 2025" ganadora="[Numero=33, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:47:16 CET 2025" ganadora="[Numero=4, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 23:47:40 CET 2025" ganadora="[Numero=21, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:48:04 CET 2025" ganadora="[Numero=16, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:48:28 CET 2025" ganadora="[Numero=6, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 23:48:59 CET 2025" ganadora="[Numero=36, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:49:23 CET 2025" ganadora="[Numero=17, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:51:19 CET 2025" ganadora="[Numero=13, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:51:43 CET 2025" ganadora="[Numero=33, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:52:07 CET 2025" ganadora="[Numero=12, Color=ROJO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 23:52:47 CET 2025" ganadora="[Numero=10, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 23:53:11 CET 2025" ganadora="[Numero=18, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:53:35 CET 2025" ganadora="[Numero=28, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:53:59 CET 2025" ganadora="[Numero=35, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:54:23 CET 2025" ganadora="[Numero=32, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:54:47 CET 2025" ganadora="[Numero=17, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:55:11 CET 2025" ganadora="[Numero=8, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 23:55:35 CET 2025" ganadora="[Numero=2, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Mon Dec 01 23:55:59 CET 2025" ganadora="[Numero=19, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:56:23 CET 2025" ganadora="[Numero=27, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:56:47 CET 2025" ganadora="[Numero=15, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:57:11 CET 2025" ganadora="[Numero=18, Color=ROJO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:57:35 CET 2025" ganadora="[Numero=0, Color=VERDE, Docena=0]"/>
+<listapuestas fecha="Mon Dec 01 23:57:59 CET 2025" ganadora="[Numero=29, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Mon Dec 01 23:58:23 CET 2025" ganadora="[Numero=13, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Mon Dec 01 23:58:47 CET 2025" ganadora="[Numero=22, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Tue Dec 02 00:01:40 CET 2025" ganadora="[Numero=25, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Tue Dec 02 00:02:42 CET 2025" ganadora="[Numero=32, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Tue Dec 02 00:03:06 CET 2025" ganadora="[Numero=25, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Tue Dec 02 00:03:30 CET 2025" ganadora="[Numero=2, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Tue Dec 02 00:03:54 CET 2025" ganadora="[Numero=34, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Tue Dec 02 00:04:15 CET 2025" ganadora="[Numero=26, Color=NEGRO, Docena=3]"/>
+<listapuestas fecha="Tue Dec 02 00:04:39 CET 2025" ganadora="[Numero=24, Color=NEGRO, Docena=2]"/>
+<listapuestas fecha="Tue Dec 02 00:05:03 CET 2025" ganadora="[Numero=11, Color=NEGRO, Docena=1]"/>
+<listapuestas fecha="Tue Dec 02 00:05:27 CET 2025" ganadora="[Numero=32, Color=ROJO, Docena=3]"/>
+<listapuestas fecha="Tue Dec 02 00:05:47 CET 2025" ganadora="[Numero=31, Color=NEGRO, Docena=3]"/>
 </historial>

@@ -65,6 +65,7 @@ public class GetIDHilos implements Callable<Jugador> {
                 return null;
             }
             Jugador j = jugadoresSesion.get(i);
+            System.out.println(j.getID());
             if (id.equals(j.getID())) {
                 return j;
             }
