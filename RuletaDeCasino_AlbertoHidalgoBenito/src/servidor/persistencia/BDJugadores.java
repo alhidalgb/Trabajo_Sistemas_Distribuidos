@@ -1,8 +1,6 @@
 package servidor.persistencia;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,7 +38,7 @@ public class BDJugadores {
      *  - Devuelve una lista de Jugador cargada desde el fichero.
      *  - Si ocurre un error, devuelve una lista vacía.
      */
-    public static List<Jugador> UnmarshallingJugadores(String nameFile) {
+    public static List<Jugador> UnmarshallingJugadores(File BBDD) {
         try {
             JAXBContext context = JAXBContext.newInstance(ListaJugadores.class);
             Unmarshaller um = context.createUnmarshaller();
@@ -48,14 +46,11 @@ public class BDJugadores {
             // SUPER IMPORTANTE: ignorar validación contra DTD para evitar JAXBException
             um.setSchema(null);
 
-            FileReader file = new FileReader(nameFile);
-            ListaJugadores listJugadores = (ListaJugadores) um.unmarshal(file);
+           
+            ListaJugadores listJugadores = (ListaJugadores) um.unmarshal(BBDD);
             return listJugadores.getLista();
         } catch (JAXBException e) {
             System.err.println("⚠️ Error unmarshalling jugadores: " + e.getMessage());
-            return new ArrayList<>();
-        } catch (FileNotFoundException e) {
-            System.err.println("⚠️ Archivo no encontrado: " + e.getMessage());
             return new ArrayList<>();
         }
     }
@@ -71,8 +66,9 @@ public class BDJugadores {
      *  - El fichero contendrá raíz <jugadores> y cada jugador con atributo id y elemento saldo.
      *  - El XML se guarda con formato indentado.
      */
-    public static void MarshallingJugadores(List<Jugador> lj, String nameFile) {
+    public static void MarshallingJugadores(List<Jugador> lj, File BBDD) {
         try {
+        	
             JAXBContext context = JAXBContext.newInstance(ListaJugadores.class);
             Marshaller m = context.createMarshaller();
             m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
@@ -84,7 +80,7 @@ public class BDJugadores {
             ListaJugadores wrapper = new ListaJugadores();
             wrapper.setLista(lj);
 
-            m.marshal(wrapper, new File(nameFile));
+            m.marshal(wrapper, BBDD);
         } catch (JAXBException e) {
             System.err.println("⚠️ Error marshalling jugadores: " + e.getMessage());
         }

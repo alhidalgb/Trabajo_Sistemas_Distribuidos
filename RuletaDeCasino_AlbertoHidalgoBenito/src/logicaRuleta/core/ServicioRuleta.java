@@ -1,5 +1,6 @@
 package logicaRuleta.core;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
@@ -52,7 +53,7 @@ import servidor.persistencia.ActualizarBD;
  *  4. mandarCasilla() → Comunica resultado a todos los jugadores.
  *  5. Vuelta al paso 1.
  */
-public class ServicioRuletaServidor {
+public class ServicioRuleta {
 
     // --- ATRIBUTOS ---
     
@@ -102,6 +103,11 @@ public class ServicioRuletaServidor {
      * Consultado por los hilos de jugadores antes de añadir apuestas.
      */
     private boolean isNoVaMas;
+    
+    
+    
+    
+    private final File BBDD;
 
     // --- CONSTRUCTORES ---
     
@@ -120,15 +126,17 @@ public class ServicioRuletaServidor {
      * @param jugadoresSesion Lista de jugadores existentes (cargados de BD).
      * @param pool            Pool de hilos personalizado.
      */
-    public ServicioRuletaServidor(List<Jugador> jugadoresSesion, ExecutorService pool) {
-        this.noVaMas = new CountDownLatch(1);
-        this.VaMas = new CountDownLatch(1);
+    public ServicioRuleta(List<Jugador> jugadoresSesion, ExecutorService pool,File BBDD) {
+        this.noVaMas = null;
+        this.VaMas = null;
         this.isNoVaMas = false;
 
         this.jugadoresSesion = Collections.synchronizedList(jugadoresSesion);
         this.jugadorApuestas = new ConcurrentHashMap<>();
         this.jugadoresConexion = Collections.synchronizedList(new ArrayList<>());
+        
         this.poolServer = pool;
+        this.BBDD = BBDD;
     }
     
     /**
@@ -139,15 +147,20 @@ public class ServicioRuletaServidor {
      *  - Crea un CachedThreadPool automáticamente.
      *  - Listas vacías de jugadores y apuestas.
      */
-    public ServicioRuletaServidor() {
-        this.noVaMas = new CountDownLatch(1);
-        this.VaMas = new CountDownLatch(1);
+    public ServicioRuleta() {
+    	
+    		//Se inician con valores nulos y se inician en GirarPelotita, asi evitamos posibles bloqueas.
+    		//Los bloqueos que pueden ocurrir es que un jugador si inicia la partida muy rapido, antes de que gire la pelotita mas concretamente, se quedara esperando para siempre en 
+    		//this.rule.VaMasAwait();  porque se cambiara la referencia de ese VaMas en girarPelotita.class cuando llame a this.rule.NoVaMas();
+    		this.noVaMas = null;
+        this.VaMas = null;
         this.isNoVaMas = false;
 
         this.jugadoresSesion = Collections.synchronizedList(new ArrayList<>());
         this.jugadorApuestas = new ConcurrentHashMap<>();
         this.jugadoresConexion = Collections.synchronizedList(new ArrayList<>());
         this.poolServer = Executors.newCachedThreadPool();
+		this.BBDD = null;
     }
 
     // --- GETTERS / SETTERS ---
@@ -352,6 +365,9 @@ public class ServicioRuletaServidor {
 
         synchronized (jugadoresSesion) {
             int N = this.jugadoresSesion.size();
+            
+            //MEJORA:cual es la forma optima de sacar las particiones?
+            
             int particiones = 30;
             
             int in = 0;
@@ -364,22 +380,28 @@ public class ServicioRuletaServidor {
             
             List<Future<Jugador>> lfj = new ArrayList<>(particiones);
             
+            
+            
             for (int i = 0; i < particiones; i++) {
-                // Super importante mandar una copia, si mando la referencia original al estar en un bloque 
-                // synchronize se bloquea todo.
-                // Mando una copia, como esta en un bloque síncrono de la lista no hay problema, no se cambiará 
-                // mientras la utilizo.
+                // Super importante mandar una copia, si mando la referencia original al estar en un bloque synchronize se bloquea todo.
+                // Mando una copia, como esta en un bloque síncrono de la lista no hay problema, no se cambiará mientras la utilizo.
+            	
+            	
+            		//MEJORA: usar subList?
+            	
                 lfj.add(this.poolServer.submit(new GetIDHilos(new ArrayList<>(this.jugadoresSesion), in, fin, iD)));
                 
                 in += suma;
                 fin += suma;
                 
-                if (fin > N) {
+                if (i==particiones-2) {
                     fin = N;
                 }
             }
             
             Jugador sesion = null;
+            
+            //MEJORA: es mas eficiente hacerla con Future, o con un flag??
             
             for (Future<Jugador> jug : lfj) {
                 try {
@@ -388,6 +410,10 @@ public class ServicioRuletaServidor {
                         break;
                     }
                 } catch (InterruptedException e) {
+                	
+                	
+                		//MEJORA: esto no lo entiendo. Si el currente Thread, es el AtenderPeticion.
+                	
                     Thread.currentThread().interrupt();
                     e.printStackTrace();
                 } catch (ExecutionException e) {
@@ -608,7 +634,7 @@ public class ServicioRuletaServidor {
     public void repartirPremio(Casilla ganadora,CountDownLatch count) {
         if (this.jugadorApuestas.isEmpty()) {
             // No hay apuestas para repartir (silencioso)
-        		count.countDown();
+        		//count.countDown();
             return;
         }
 
@@ -633,7 +659,7 @@ public class ServicioRuletaServidor {
         } catch (BrokenBarrierException e) {
             System.err.println("⚠️ Error en la barrera de premios: " + e.getMessage());
         } finally {
-            count.countDown();
+            //count.countDown();
             poolPremios.shutdown();
             try {
                 if (!poolPremios.awaitTermination(3, TimeUnit.SECONDS)) {
@@ -670,7 +696,7 @@ public class ServicioRuletaServidor {
      */
     public void mandarCasilla(Casilla ganadora,CountDownLatch count) {
         if (this.jugadoresConexion.isEmpty()) {
-        		count.countDown();
+        		//count.countDown();
             return;
         }
 
@@ -692,7 +718,7 @@ public class ServicioRuletaServidor {
             } catch (BrokenBarrierException e) {
                 System.err.println("⚠️ Error en la barrera de casillas: " + e.getMessage());
             } finally {
-            		count.countDown();
+            		//count.countDown();
                 poolCasilla.shutdown();
                 try {
                     if (!poolCasilla.awaitTermination(3, TimeUnit.SECONDS)) {
@@ -754,7 +780,7 @@ public class ServicioRuletaServidor {
         jugadoresConexion.remove(jug);
         //No pasa nada por que se produzcan errores de carrera, en el sentido de estar todo el rato sobreescribiendo, ya que al final la lista        
         // jugadoresSesion siempre va a estar acutalizada.         
-        this.poolServer.execute(new ActualizarBD(new ArrayList<>(this.jugadoresSesion),"jugadores.xml"));        
+        this.poolServer.execute(new ActualizarBD(new ArrayList<>(this.jugadoresSesion),this.BBDD));        
        
     }
     

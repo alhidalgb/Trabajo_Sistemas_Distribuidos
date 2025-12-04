@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<!DOCTYPE jugadores SYSTEM "jugadores.dtd">
-<!-- Este documento sirve como almacen de todas las personas que han iniciado sesion y que saldo tienen -->
-<jugadores><jugador id="pepe"><saldo>100.0</saldo></jugador><jugador id="ana"><saldo>500.5</saldo></jugador></jugadores>

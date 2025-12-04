@@ -49,10 +49,11 @@ public class guardarApuestas implements Runnable {
         this.xml = xml;
     }
 
+    //Este hilo quiero siempre que termine porque es muy necesario guardar bien el historial.
     @Override
     public void run() {
         try {
-            // Persistir apuestas y resultado en XML
+            // Persistir apuestas y resultado en XML, 
             xml.guardarJugadorApuesta(apuestas, ganadora);
             //System.out.println("✅ Apuestas guardadas en historial con número ganador: " + ganadora.getNumero());
         } catch (Exception e) {

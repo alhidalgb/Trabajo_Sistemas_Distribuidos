@@ -38,6 +38,9 @@ import modeloDominio.Jugador;
  *  - Cada llamada a guardarJugadorApuesta añadirá un nuevo bloque <listapuestas> con fecha, ganadora y jugadores.
  *  - El XML se escribirá con formato indentado (pretty print).
  */
+
+
+//Esta es la unica clase que toca el historial.
 public class XMLServidor {
 
     private final File file;
@@ -112,6 +115,7 @@ public class XMLServidor {
      *  - El fichero se actualiza con formato indentado.
      */
     public synchronized void guardarJugadorApuesta(Map<Jugador, List<Apuesta>> map, Casilla ganador) {
+    	
         try {
             Date fechaHoraActual = new Date();
 

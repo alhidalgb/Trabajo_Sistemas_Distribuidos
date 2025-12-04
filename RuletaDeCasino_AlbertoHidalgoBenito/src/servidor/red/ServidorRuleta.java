@@ -1,12 +1,13 @@
 package servidor.red;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.*;
 
 import logicaRuleta.core.AtenderJugador;
-import logicaRuleta.core.ServicioRuletaServidor;
+import logicaRuleta.core.ServicioRuleta;
 import modeloDominio.Jugador;
 import servidor.persistencia.ActualizarBD;
 import servidor.persistencia.BDJugadores;
@@ -46,25 +47,31 @@ public class ServidorRuleta {
     public void IniciarServidor(int puerto, String historial, String bd) {
         // Inicializar historial XML
         XMLServidor xml = new XMLServidor(historial);
+        
+        File BBDD= new File(bd);
+        
 
         // Cargar jugadores desde la base de datos
-        List<Jugador> jugadoresConSesion = BDJugadores.UnmarshallingJugadores(bd);
+        List<Jugador> jugadoresConSesion = BDJugadores.UnmarshallingJugadores(BBDD);
 
         for (Jugador j : jugadoresConSesion) {
             System.out.println("Jugador cargado: " + j);
         }
+        
+       
         
         System.out.println(jugadoresConSesion.size());
 
         // Pool de hilos para atender clientes
         
         //MEJORA: ¿es mejor .newCachedThreadPool() o .newFixedThreadPool(Runtime.getRuntime().availableProcessors()) ?
+        //Es bueno pasarle esta pool a otras clases?
         
         
         ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         
         // Inicializar lógica de ruleta con jugadores cargados
-        ServicioRuletaServidor rule = new ServicioRuletaServidor(jugadoresConSesion, pool);
+        ServicioRuleta rule = new ServicioRuleta(jugadoresConSesion, pool,BBDD);
 
         // Scheduler para tareas periódicas (crupier y actualización BD)
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
@@ -76,7 +83,7 @@ public class ServidorRuleta {
             scheduler.scheduleWithFixedDelay(new GiraPelotita(rule, pool, xml),10, 20, TimeUnit.SECONDS);
 
             // Guardar BD de jugadores cada minuto
-            scheduler.scheduleAtFixedRate(new ActualizarBD(jugadoresConSesion, bd),1, 1, TimeUnit.MINUTES);
+            scheduler.scheduleAtFixedRate(new ActualizarBD(jugadoresConSesion, BBDD),1, 1, TimeUnit.MINUTES);
 
             // Bucle principal: aceptar clientes
             while (true) {
@@ -100,7 +107,7 @@ public class ServidorRuleta {
             System.err.println("⚠️ Error iniciando servidor: " + e.getMessage());
         } finally {
             // Guardar estado de jugadores al cerrar
-            BDJugadores.MarshallingJugadores(jugadoresConSesion, bd);
+            BDJugadores.MarshallingJugadores(jugadoresConSesion, BBDD);
 
             scheduler.shutdown();
             pool.shutdown();
@@ -112,4 +119,12 @@ public class ServidorRuleta {
             }
         }
     }
+    
+    public static void main(String [ ] args) {
+		
+		ServidorRuleta server = new ServidorRuleta();
+		server.IniciarServidor(8000,"historial.xml","jugadores.xml");
+
+	}
+    
 }

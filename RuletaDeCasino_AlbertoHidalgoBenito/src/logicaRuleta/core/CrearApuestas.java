@@ -12,10 +12,10 @@ import modeloDominio.TipoApuesta;
 
 public class CrearApuestas extends Thread {
 
-	private ServicioRuletaServidor rule;
+	private ServicioRuleta rule;
 	private Jugador jugador;
 
-	public CrearApuestas(ServicioRuletaServidor rule, Jugador jug) {
+	public CrearApuestas(ServicioRuleta rule, Jugador jug) {
 		this.jugador = jug;
 		this.rule = rule;
 	}

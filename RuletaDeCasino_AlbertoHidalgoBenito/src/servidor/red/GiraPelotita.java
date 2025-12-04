@@ -5,7 +5,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import logicaRuleta.core.ServicioRuletaServidor;
+import logicaRuleta.core.ServicioRuleta;
 import modeloDominio.Casilla;
 import servidor.persistencia.XMLServidor;
 
@@ -31,7 +31,7 @@ import servidor.persistencia.XMLServidor;
 public class GiraPelotita implements Runnable {
 
     // --- ATRIBUTOS ---
-    private final ServicioRuletaServidor rule;
+    private final ServicioRuleta rule;
     private final ExecutorService pool;
     private final XMLServidor xml;
 
@@ -43,7 +43,7 @@ public class GiraPelotita implements Runnable {
      * @param pool ExecutorService para tareas concurrentes.
      * @param xml  Manejador de persistencia XML.
      */
-    public GiraPelotita(ServicioRuletaServidor rule, ExecutorService pool, XMLServidor xml) {
+    public GiraPelotita(ServicioRuleta rule, ExecutorService pool, XMLServidor xml) {
         this.rule = rule;
         this.pool = pool;
         this.xml = xml;
@@ -65,19 +65,30 @@ public class GiraPelotita implements Runnable {
     		
     		//MEJORAS: queiro que antes de que se reseete el NO VA MAS, se envie el mensaje. Lo que me ocurre ahora es que si estoy esperando a que se abra la mesa,
     		// se muestra primero el menu. Yo quiero que aparezca la casilla y las ganancias.
+    		//Basicamente quiero mandar las Casillas y los Premiso antes de volver al menu.
+    	
     		
     	
         // 1. CERRAR APUESTAS
         this.rule.NoVaMas();
-
+        
+        
+        //Si ha ocurrido algun error, cerramos la mesa y paramos.        
+        if(Thread.currentThread().isInterrupted()){return;}
+        
+        
         // 2. ESPERAR 2 segundos para que los hilos de apuestas terminen
         try {
             TimeUnit.SECONDS.sleep(2);
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt(); // restaurar estado
+        	
+        		//MEJORA:Aqui tendria que cerrar el hilo??
+        	
+            Thread.currentThread().interrupt(); // restaurar estado 
             System.err.println("⚠️ GiraPelotita interrumpida durante la espera de cierre de apuestas");
         }
-
+        
+        
         
         // 3. GENERAR NÚMERO GANADOR
         int numeroGanador = new Random().nextInt(37); // 0-36
@@ -86,6 +97,7 @@ public class GiraPelotita implements Runnable {
         
         // 4. REPARTIR PREMIOS Y COMUNICAR CASILLA
         
+        //MEJORA:esta sincronizacion no me va bien.
         CountDownLatch count = new CountDownLatch(2);
         this.rule.mandarCasilla(ganadora,count);
         this.rule.repartirPremio(ganadora,count);
@@ -101,12 +113,15 @@ public class GiraPelotita implements Runnable {
             System.err.println("⚠️ GiraPelotita interrumpida durante la espera antes de resetear");
         }
 
+        /*
         try {
 			count.await();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+        */
+        
         // 7. RESETEAR Y ABRIR NUEVA RONDA
         this.rule.resetNoVaMas();
     }

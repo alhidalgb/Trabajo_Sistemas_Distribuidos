@@ -36,7 +36,7 @@ public class AtenderJugador implements Runnable {
 
     // --- ATRIBUTOS ---
     private Socket cliente;
-    private ServicioRuletaServidor rule; // Lógica de negocio compartida
+    private ServicioRuleta rule; // Lógica de negocio compartida
     private Jugador jugador; // El jugador asociado a este hilo (null hasta login/registro)
 
     // --- CONSTRUCTOR ---
@@ -55,7 +55,7 @@ public class AtenderJugador implements Runnable {
      * @param rule    Servicio central de la ruleta.
      * @throws IllegalArgumentException Si el socket o rule son nulos/inválidos.
      */
-    public AtenderJugador(Socket cliente, ServicioRuletaServidor rule) {
+    public AtenderJugador(Socket cliente, ServicioRuleta rule) {
         if (cliente == null || cliente.isClosed() || rule == null) {
             throw new IllegalArgumentException("Socket inválido: nulo o cerrado.");
         }
@@ -186,7 +186,8 @@ public class AtenderJugador implements Runnable {
 
         out.println("¿Cuánto dinero quieres ingresar?");
         
-        while (true) {
+        //MEJORA: Esta bien poner aqui esta comprobacion? En general en los bucles.
+        while (!Thread.currentThread().isInterrupted()) {
             try {
                 out.println("NECESITO RESPUESTA");
                 String cantStr = safeReadLine(in, out);
@@ -266,6 +267,10 @@ public class AtenderJugador implements Runnable {
                         out.println("✅ Apuesta guardada con éxito.");
                     } else {
                         out.println("⚠️ No se pudo guardar la apuesta.");
+                        
+                        //MEJORA: Esto aqui esta bien? es util de verdad??
+                        break;
+                        //salimos del bucle poruqe es NoVaMas.
                         // Solo informativo, no desconectamos
                     }
                 } else {
