@@ -2,8 +2,6 @@ package logicaRuleta.concurrencia;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
@@ -16,21 +14,14 @@ import modeloDominio.Jugador;
 /**
  * Clase MandarPremios
  * -------------------
- * Tarea Runnable que calcula las ganancias de un jugador en una ronda y las comunica.
- * Utiliza una CyclicBarrier para sincronizar el reparto de premios entre varios jugadores.
- *
- * PRECONDICIONES:
- *  - El jugador debe estar inicializado y tener conexión activa (puede ser null si se cayó).
- *  - La lista de apuestas debe estar inicializada (no null).
- *  - La casilla ganadora debe estar correctamente creada (número válido entre 0 y 36).
- *  - La CyclicBarrier debe estar inicializada para coordinar los hilos.
- *  - El ServicioRuletaServidor debe estar disponible para calcular premios.
- *
- * POSTCONDICIONES:
- *  - Se calcula la ganancia total del jugador en la ronda.
- *  - Se suma la ganancia al saldo del jugador.
- *  - Si la conexión está activa, se envía un mensaje al cliente con la ganancia.
- *  - El hilo espera en la barrera para sincronizarse con los demás jugadores.
+ * Tarea (Worker) encargada de calcular y notificar los resultados de la ronda a un jugador específico.
+ * Utiliza una barrera (CyclicBarrier) para asegurar que el cálculo termine antes de notificar.
+ * * PRECONDICIONES:
+ * - El jugador y la lista de apuestas no deben ser null.
+ * - La barrera debe estar configurada correctamente (N jugadores + 1).
+ * * POSTCONDICIONES:
+ * - El saldo del jugador se actualiza (incluso si está desconectado).
+ * - Si hay conexión, se envía el mensaje visual y el comando de actualización.
  */
 public class MandarPremios implements Runnable {
 
@@ -42,12 +33,10 @@ public class MandarPremios implements Runnable {
 
     // --- CONSTRUCTOR ---
     /**
-     * Inicializa la tarea con el jugador, sus apuestas, la casilla ganadora y la barrera de sincronización.
-     *
-     * @param jug         Jugador al que se le reparten premios.
-     * @param listApuesta Lista de apuestas del jugador.
-     * @param ganadora    Casilla ganadora de la ronda.
-     * @param starter     Barrera de sincronización entre hilos.
+     * @param jug         Jugador al que se procesan los premios.
+     * @param listApuesta Lista de apuestas realizadas en esta ronda.
+     * @param ganadora    La casilla ganadora generada por el servidor.
+     * @param starter     Barrera para sincronizar el fin del cálculo con el resto de hilos.
      */
     public MandarPremios(Jugador jug, List<Apuesta> listApuesta, Casilla ganadora, CyclicBarrier starter) {
         this.ganadora = ganadora;
@@ -57,44 +46,54 @@ public class MandarPremios implements Runnable {
     }
 
     // --- LÓGICA DE NEGOCIO ---
-    /**
-     * Ejecuta la tarea: calcula la ganancia del jugador, espera en la barrera y envía el resultado.
-     * Si el jugador está desconectado, se actualiza el saldo pero no se envía el mensaje.
-     */
     @Override
     public void run() {
         double ganancia = 0.0;
-        ObjectOutputStream out = null;
 
-        // 1. Calcular las ganancias de todas las apuestas
+        // 1. Calcular las ganancias (Operación local, sin bloqueos)
         for (Apuesta ap : listApuesta) {
             ganancia += RuletaUtils.calcularPremio(ganadora, ap);
         }
 
-        if (jugador.getOutputStream() != null) {
-		    out =jugador.getOutputStream();
-		}
-
-        // 3. Sincronizar con otros hilos mediante la barrera
+        // 2. Sincronización: Esperar a que todos los hilos terminen de calcular
         try {
             starter.await();
         } catch (InterruptedException | BrokenBarrierException e) {
-            Thread.currentThread().interrupt(); // restaurar flag si fue interrupción
-        }
+            // Si la barrera se rompe, marcamos interrupción pero CONTINUAMOS al finally
+            // para asegurar que el jugador reciba su dinero.
+            Thread.currentThread().interrupt();
+        } finally {
+            
+            // 3. Sección Crítica: Actualización y Envío
+            // IMPRESCINDIBLE: synchronized(jugador) para evitar colisión con AtenderJugador
+            synchronized (jugador) {
+                
+                // A) Actualización segura del modelo
+                jugador.sumaRestaSaldo(ganancia);
 
-        // 4. Actualizar saldo y mandar mensaje al jugador
-        jugador.sumaRestaSaldo(ganancia);
-        if (out != null) {
-            try {
-            	
-            		out.writeObject("actualizar saldo:"+ganancia);
-				out.writeObject("\u001b[1m\u001b[33mHAS GANADO: " + ganancia + "€\u001b[0m");
-	            	out.flush();
-
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+                // B) Notificación al cliente (si sigue conectado)
+                try {
+                    ObjectOutputStream out = jugador.getOutputStream();
+                    
+                    if (out != null) {
+                        // Protocolo técnico: Actualizar variable local saldo en cliente
+                        out.writeObject("actualizar saldo:" + ganancia);
+                        
+                        // Protocolo visual: Mensaje de felicitación
+                        if (ganancia > 0) {
+                            out.writeObject("\u001b[1m\u001b[33m🎉 ¡HAS GANADO: " + ganancia + "€! 🎉\u001b[0m");
+                        } else {
+                             out.writeObject("\\u001b[1m\\u001b[33mNo ha habido suerte. Sigue minando!!!\\u001b[0m");
+                        }
+                        
+                        out.flush();
+                        out.reset(); // Limpieza de caché del stream
+                    }
+                } catch (IOException e) {
+                    // El jugador se desconectó justo ahora. 
+                    // No hacemos nada, el saldo ya se actualizó en el servidor.
+                }
+            }
         }
     }
 }

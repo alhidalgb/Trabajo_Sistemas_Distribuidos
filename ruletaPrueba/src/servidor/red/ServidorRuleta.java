@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.*;
 
 import logicaRuleta.core.AtenderJugador;
@@ -13,117 +15,116 @@ import servidor.persistencia.ActualizarBD;
 import servidor.persistencia.BDJugadores;
 import servidor.persistencia.XMLServidor;
 
-import java.util.*;
-
 /**
  * Clase ServidorRuleta
  * --------------------
- * Representa el servidor principal de la ruleta. Se encarga de:
- *  - Cargar jugadores desde la base de datos XML.
- *  - Iniciar el servicio de ruleta.
- *  - Aceptar conexiones de clientes y atenderlas en paralelo.
- *  - Lanzar tareas periódicas: crupier automático y actualización de la base de datos.
- *
- * PRECONDICIONES:
- *  - El puerto debe estar libre y accesible.
- *  - Los ficheros historial y bd deben ser rutas válidas en el sistema de archivos.
- *
- * POSTCONDICIONES:
- *  - El servidor queda escuchando en el puerto indicado.
- *  - Los clientes pueden conectarse y ser atendidos en paralelo.
- *  - Cada 20 segundos se ejecuta el ciclo de la ruleta (GiraPelotita).
- *  - Cada minuto se guarda la base de datos de jugadores (ActualizarBD).
- *  - Al cerrar, se persiste el estado de los jugadores y se cierran los pools de hilos.
+ * Punto de entrada (Main) del Servidor.
+ * Orquestador principal que levanta la infraestructura de red, persistencia y lógica de juego.
+ * * Responsabilidades:
+ * 1. Cargar estado inicial (Jugadores) desde disco.
+ * 2. Iniciar el ciclo de juego (GiraPelotita) y persistencia programada (ActualizarBD).
+ * 3. Escuchar conexiones TCP entrantes y delegarlas a hilos trabajadores (AtenderJugador).
  */
 public class ServidorRuleta {
 
     /**
-     * Inicia el servidor de ruleta en el puerto indicado.
+     * Entry Point de la aplicación Servidor.
+     * @param args Argumentos de consola (no usados).
+     */
+    public static void main(String[] args) {
+        ServidorRuleta server = new ServidorRuleta();
+        // Rutas relativas por defecto
+        server.IniciarServidor(8000, "historial.xml", "jugadores.xml");
+    }
+
+    /**
+     * Inicializa y ejecuta el servidor de ruleta.
      *
-     * @param puerto    Puerto TCP donde escuchar conexiones de clientes.
-     * @param historial Ruta del fichero XML donde se guarda el historial de apuestas.
-     * @param bd        Ruta del fichero XML donde se guarda la base de datos de jugadores.
+     * @param puerto    Puerto TCP de escucha (ej: 8000).
+     * @param historial Ruta del archivo XML para historial de rondas.
+     * @param bd        Ruta del archivo XML para base de datos de usuarios.
      */
     public void IniciarServidor(int puerto, String historial, String bd) {
-        // Inicializar historial XML
+        
+        System.out.println("🚀 Iniciando Servidor Ruleta en puerto " + puerto + "...");
+        
+        // 1. PERSISTENCIA INICIAL
         XMLServidor xml = new XMLServidor(historial);
-        
-        File BBDD= new File(bd);
-        
+        File BBDD = new File(bd);
 
-        // Cargar jugadores desde la base de datos
+        // Cargar jugadores (o crear lista vacía si no existe fichero)
         List<Jugador> jugadoresConSesion = BDJugadores.UnmarshallingJugadores(BBDD);
-
-        for (Jugador j : jugadoresConSesion) {
-            System.out.println("Jugador cargado: " + j);
+        if (jugadoresConSesion == null) {
+            System.out.println("ℹ️ No se encontró base de datos previa o estaba vacía. Iniciando desde cero.");
+            jugadoresConSesion = new ArrayList<>();
+        } else {
+            System.out.println("✅ " + jugadoresConSesion.size() + " jugadores cargados desde BD.");
         }
-        
-       
-        
-        System.out.println(jugadoresConSesion.size());
 
-        // Pool de hilos para atender clientes
-        
-        
-        
-        //Es mejor .newCachedThreadPool() para la Ruleta, aquí interesa tener concurrencia (más hilos que CPUs para atender a más jugadores concurrentemente).    
+        // 2. INFRAESTRUCTURA DE CONCURRENCIA
+        // CachedThreadPool es ideal aquí: crea hilos bajo demanda y reutiliza los inactivos.
+        // Si hay un pico de 100 usuarios, crea 100 hilos. Si bajan, los elimina.
         ExecutorService pool = Executors.newCachedThreadPool();
-        
-        // Inicializar lógica de ruleta con jugadores cargados
-        ServicioRuleta rule = new ServicioRuleta(jugadoresConSesion, pool,BBDD);
 
-        // Scheduler para tareas periódicas (crupier y actualización BD)
+        // 3. LÓGICA DE NEGOCIO
+        ServicioRuleta rule = new ServicioRuleta(jugadoresConSesion, pool, BBDD);
+
+        // 4. TAREAS PROGRAMADAS (Scheduler)
+        // Usamos un pool de 2 hilos para garantizar que la persistencia y el juego no se bloqueen mutuamente
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 
         try (ServerSocket server = new ServerSocket(puerto)) {
-        	
-        	
-            // Crupier automático cada 20 segundos
-            scheduler.scheduleWithFixedDelay(new GiraPelotita(rule, pool, xml),10, 20, TimeUnit.SECONDS);
+            
+            System.out.println("🟢 Servidor ONLINE. Esperando conexiones...");
 
-            // Guardar BD de jugadores cada minuto
-            scheduler.scheduleAtFixedRate(new ActualizarBD(jugadoresConSesion, BBDD),1, 1, TimeUnit.MINUTES);
+            // A) Tarea Cíclica: GiraPelotita (Ciclo de juego)
+            // Ejecuta una ronda cada 20 segundos (Delay inicial de 10s para dar tiempo a conectar)
+            scheduler.scheduleWithFixedDelay(new GiraPelotita(rule, pool, xml), 10, 20, TimeUnit.SECONDS);
 
-            // Bucle principal: aceptar clientes
+            // B) Tarea Cíclica: Persistencia (Backup de seguridad)
+            // Guarda el estado de los jugadores cada minuto
+            scheduler.scheduleAtFixedRate(new ActualizarBD(jugadoresConSesion, BBDD), 1, 1, TimeUnit.MINUTES);
+
+            // 5. BUCLE PRINCIPAL DE CONEXIÓN
             while (true) {
-            	
                 try {
-                	
-                    Socket cliente = server.accept();
-                    pool.execute(new AtenderJugador(cliente, rule));
+                    // Bloqueante hasta que llega un cliente
+                    Socket cl = server.accept();
                     
+                    // Configuración de Timeout (Opcional)
+                    // Si un cliente no envía nada en 45s, se lanza SocketTimeoutException en AtenderJugador
+                    cl.setSoTimeout(45000); 
+                    
+                    // Delegamos la gestión del cliente al Pool de Hilos
+                    pool.execute(new AtenderJugador(cl, rule));
                     
                 } catch (IOException e) {
-                    System.err.println("⚠️ Error aceptando cliente: " + e.getMessage());
+                    System.err.println("⚠️ Error de conexión con cliente: " + e.getMessage());
                 } catch (RejectedExecutionException e) {
-                    System.err.println("⚠️ Pool saturado: " + e.getMessage());
+                    System.err.println("⚠️ Servidor saturado. Conexión rechazada: " + e.getMessage());
                 }
             }
-            
-            
-            
+
         } catch (IOException e) {
-            System.err.println("⚠️ Error iniciando servidor: " + e.getMessage());
+            System.err.println("❌ Error crítico al iniciar servidor (Puerto ocupado?): " + e.getMessage());
         } finally {
-            // Guardar estado de jugadores al cerrar
+            // CIERRE ORDENADO (Graceful Shutdown)
+            System.out.println("⛔ Deteniendo servidor...");
+
+            // Forzamos guardado final
             BDJugadores.MarshallingJugadores(jugadoresConSesion, BBDD);
 
             scheduler.shutdown();
             pool.shutdown();
+            
             try {
-                scheduler.awaitTermination(3, TimeUnit.SECONDS);
-                pool.awaitTermination(3, TimeUnit.SECONDS);
+                if (!scheduler.awaitTermination(3, TimeUnit.SECONDS)) scheduler.shutdownNow();
+                if (!pool.awaitTermination(3, TimeUnit.SECONDS)) pool.shutdownNow();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
+            
+            System.out.println("👋 Servidor detenido.");
         }
     }
-    
-    public static void main(String [ ] args) {
-		
-		ServidorRuleta server = new ServidorRuleta();
-		server.IniciarServidor(8000,"historial.xml","jugadores.xml");
-
-	}
-    
 }

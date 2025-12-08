@@ -47,7 +47,7 @@ public final class RuletaUtils {
 
             case COLOR:
                 if (ganadora.getNumero() != 0 &&
-                    valorApostado.equalsIgnoreCase(ganadora.getColor())) {
+                    valorApostado.equalsIgnoreCase(ganadora.getColor().toString())) {
                     return cantidad * 2;
                 }
                 break;

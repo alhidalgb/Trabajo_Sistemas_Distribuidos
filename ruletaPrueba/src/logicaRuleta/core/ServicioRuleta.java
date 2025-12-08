@@ -6,7 +6,7 @@ import java.io.ObjectOutputStream;
 import java.util.*;
 import java.util.concurrent.*;
 
-import logicaRuleta.concurrencia.GetIDHilos;
+import logicaRuleta.concurrencia.getIDHilos;
 import logicaRuleta.concurrencia.MandarPremios;
 import logicaRuleta.concurrencia.cancelarFuture;
 import logicaRuleta.concurrencia.mandarMensaje;
@@ -15,58 +15,86 @@ import modeloDominio.Casilla;
 import modeloDominio.Jugador;
 import servidor.persistencia.ActualizarBD;
 
+/**
+ * Clase ServicioRuleta
+ * --------------------
+ * Gestor central del estado del juego y la comunicación con los clientes.
+ * Maneja la concurrencia de conexiones, apuestas y reparto de premios.
+ * * Responsabilidades:
+ * 1. Mantener la lista de jugadores conectados y sus sesiones.
+ * 2. Gestionar el estado de la mesa (Abierta/Cerrada).
+ * 3. Coordinar el envío de mensajes masivos (Broadcast).
+ * 4. Repartir premios de forma concurrente.
+ */
 public class ServicioRuleta {
 
     // --- ATRIBUTOS ---
+    
+    // Pool de hilos para tareas asíncronas (búsquedas, mensajes, premios)
     private final ExecutorService poolServer;
     
-    // Listas thread-safe
-    private final List<Jugador> jugadoresSesion;
-    private final List<Jugador> jugadoresConexion;
+    // Listas thread-safe para gestión de usuarios
+    private final List<Jugador> jugadoresSesion;   // Todos los registrados en memoria
+    private final List<Jugador> jugadoresConexion; // Solo los que tienen socket activo
     
-    // Mapa de apuestas (ConcurrentHashMap para seguridad en escritura)
-    private Map<Jugador, List<Apuesta>> jugadorApuestas;
+    // Mapa de apuestas (ConcurrentHashMap para permitir escrituras simultáneas rápidas)
+    private final Map<Jugador, List<Apuesta>> jugadorApuestas;
 
-    // ESTADO DE LA MESA
-    // Solo necesitamos el booleano. La sincronización de espera la hace el cliente.
+    // Estado de la mesa (volatile para visibilidad inmediata entre hilos)
     private volatile boolean isNoVaMas; 
     
+    // Referencia al archivo de persistencia
     private final File BBDD;
 
     // --- CONSTRUCTORES ---
 
+    /**
+     * Constructor principal.
+     * @param jugadoresSesion Lista inicial de jugadores cargada de BD.
+     * @param pool ExecutorService para gestión de hilos.
+     * @param BBDD Archivo físico para persistencia.
+     */
     public ServicioRuleta(List<Jugador> jugadoresSesion, ExecutorService pool, File BBDD) {
-        this.isNoVaMas = false; // La mesa empieza abierta
+        this.isNoVaMas = false; // La mesa empieza abierta ("Hagan juego")
 
+        // Usamos listas sincronizadas para evitar corrupciones básicas
         this.jugadoresSesion = Collections.synchronizedList(jugadoresSesion);
-        this.jugadorApuestas = new ConcurrentHashMap<>();
         this.jugadoresConexion = Collections.synchronizedList(new ArrayList<>());
+        this.jugadorApuestas = new ConcurrentHashMap<>();
         
         this.poolServer = pool;
         this.BBDD = BBDD;
     }
     
+    /**
+     * Constructor por defecto (para pruebas).
+     */
     public ServicioRuleta() {
         this(new ArrayList<>(), Executors.newCachedThreadPool(), null);
     }
 
-    // --- GETTERS / SETTERS ---
+    // --- GETTERS ---
 
     public List<Jugador> getListJugadoresSesion() { return this.jugadoresSesion; }
     public Map<Jugador, List<Apuesta>> getJugadorApuestas() { return this.jugadorApuestas; }
     public boolean isNoVaMas() { return this.isNoVaMas; }
     
-    // Copia defensiva para persistencia (XML) o cálculos seguros sin bloquear el mapa original
+    /**
+     * Genera una instantánea segura (Snapshot) de las apuestas actuales.
+     * Útil para guardar en XML o inspeccionar sin bloquear el mapa original.
+     * @return Copia profunda del mapa de apuestas.
+     */
     public Map<Jugador, List<Apuesta>> getCopiaJugadorApuestas() {
         Map<Jugador, List<Apuesta>> foto;
-        // Sincronizamos para obtener la "foto" del mapa
+        // Bloqueo breve para copiar la estructura del mapa
         synchronized (jugadorApuestas) {
             foto = new HashMap<>(jugadorApuestas);
         }
+        
+        // Copia profunda de las listas de apuestas
         Map<Jugador, List<Apuesta>> copia = new HashMap<>(foto.size());
         for (Map.Entry<Jugador, List<Apuesta>> entry : foto.entrySet()) {
             Jugador jugador = entry.getKey();
-            // Sincronizamos la lista específica del jugador para copiarla
             synchronized (entry.getValue()) {
                 copia.put(jugador, new ArrayList<>(entry.getValue()));
             }
@@ -77,59 +105,48 @@ public class ServicioRuleta {
     // --- CONTROL DE RONDAS Y MENSAJERÍA ---
 
     /**
-     * Cierra la mesa (NO VA MAS).
-     * Cambia estado a cerrado y notifica a clientes.
+     * Cierra la mesa para impedir nuevas apuestas.
+     * @param latchFinBroadcast Latch para notificar cuando se termine de avisar a todos.
      */
     public void NoVaMas(CountDownLatch latchFinBroadcast) {
         this.isNoVaMas = true;
-        
         String msg = "\u001b[31m--- ⛔ NO VA MÁS ⛔ ---\u001b[0m";
-        
-        // Reutilizamos la lógica común
         enviarBroadcastConcurrente(msg, latchFinBroadcast);
     }
 
     /**
-     * Abre la mesa (VA MAS / ABRIR MESA).
-     * Limpia apuestas, cambia estado a abierto y notifica.
+     * Abre la mesa y limpia las apuestas anteriores.
+     * @param latchFinBroadcast Latch para notificar fin del broadcast.
      */
     public void resetNoVaMas(CountDownLatch latchFinBroadcast) {
         this.jugadorApuestas.clear();
         this.isNoVaMas = false;
-
         String msg = "\u001b[32m--- 🟢 ¡HAGAN JUEGO! (ABRIR MESA) ---\u001b[0m";
-        
-        // La clave "ABRIR MESA" o "VA MAS" debe estar en el mensaje para que el cliente la detecte
         enviarBroadcastConcurrente("ABRIR MESA " + msg, latchFinBroadcast);
     }
 
     /**
-     * Método público para enviar mensajes generales (como el resultado).
+     * Envía un mensaje a todos los jugadores conectados de forma concurrente.
+     * Divide la lista de jugadores en chunks y asigna hilos para el envío.
+     * * @param mensaje Texto a enviar.
+     * @param latchFinExterno Latch opcional para sincronizar con el hilo principal.
      */
-    public void broadcastMensaje(String mensaje, CountDownLatch latchFinBroadcast) {
-        enviarBroadcastConcurrente(mensaje, latchFinBroadcast);
-    }
-
-    /**
-     * MÉTODO PRIVADO (HELPER) PARA EVITAR DUPLICIDAD
-     * Se encarga de la división de hilos y la sincronización con Barrera.
-     */
-    private void enviarBroadcastConcurrente(String mensaje, CountDownLatch latchFinExterno) {
+    public void enviarBroadcastConcurrente(String mensaje, CountDownLatch latchFinExterno) {
         if (jugadoresConexion.isEmpty()) {
             if (latchFinExterno != null) latchFinExterno.countDown();
             return;
         }
 
         synchronized (this.jugadoresConexion) {
-            int N = this.jugadoresConexion.size(); // Total de jugadores conectados
+            int N = this.jugadoresConexion.size(); 
             
-            // --- CORRECCIÓN CRÍTICA ---
-            // La barrera debe esperar a TODOS los hilos individuales de jugadores (N) 
-            // + 1 (este hilo principal que espera al final).
+            // Limitamos a 30 hilos máximo para no saturar el pool
+            int numHilos = Math.min(N, 30);
+            
+            // IMPORTANTE: La barrera espera a (Total Jugadores + 1).
+            // Esto es porque 'mandarMensaje' lanza internamente un hilo por jugador.
             CyclicBarrier internalBarrier = new CyclicBarrier(N + 1); 
 
-            // El resto de la lógica de partición se mantiene igual para organizar las tareas
-            int numHilos = Math.min(N, 30);
             int tamanoChunk = N / numHilos;
             int resto = N % numHilos;
             int indiceInicio = 0;
@@ -139,13 +156,14 @@ public class ServicioRuleta {
                 
                 List<Jugador> sublista = new ArrayList<>(this.jugadoresConexion.subList(indiceInicio, indiceFin));
                 
+                // Lanzamos la tarea de distribución
                 this.poolServer.execute(new mandarMensaje(mensaje, sublista, internalBarrier));
 
                 indiceInicio = indiceFin;
             }
 
             try {
-                // El hilo principal espera aquí hasta que los N hilos de jugadores estén listos para hacer flush
+                // Esperamos a que todos los mensajes se hayan enviado
                 internalBarrier.await(); 
             } catch (InterruptedException | BrokenBarrierException e) {
                 e.printStackTrace();
@@ -155,85 +173,99 @@ public class ServicioRuleta {
         }
     }
 
-    // --- GESTIÓN DE JUGADORES (Tu Búsqueda Concurrente Didáctica) ---
+    // --- GESTIÓN DE JUGADORES (BÚSQUEDA CONCURRENTE) ---
 
+    /**
+     * Busca un jugador por ID utilizando paralelismo.
+     * @param iD Identificador del jugador.
+     * @return Objeto Jugador si existe, null si no.
+     */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public Jugador getJugador(String iD) {
         if (iD == null || iD.trim().isEmpty()) return null;
-
+        
+        List<Future<Jugador>> lfj;
+        Jugador sesion = null;
+        
+        // FASE 1: Preparación (Sincronizada)
+        // Solo bloqueamos para copiar la lista y lanzar tareas. Es muy rápido.
         synchronized (jugadoresSesion) {
+            if (this.jugadoresSesion.isEmpty()) return null;
+            
             int N = this.jugadoresSesion.size();
-            int particiones = 30;
-            int in = 0;
-            int fin = 2; // Default pequeño
+            int numHilos = Math.min(N, 30);
             
-            if (30 < N) fin = N / 30;
+            int tamanoChunk = N / numHilos;
+            int resto = N % numHilos;
+            int indiceInicio = 0;
             
-            int suma = fin;
+            lfj = new ArrayList<>(numHilos);
             
-            List<Future<Jugador>> lfj = new ArrayList<>(particiones);
-            
-            // Lanzamos hilos de búsqueda
-            for (int i = 0; i < particiones; i++) {
-                // Pasamos copia de la lista para evitar problemas de concurrencia
-                lfj.add(this.poolServer.submit(new GetIDHilos(new ArrayList<>(this.jugadoresSesion), in, fin, iD)));
+            for (int i = 0; i < numHilos; i++) {
+                int indiceFin = indiceInicio + tamanoChunk + (i < resto ? 1 : 0);
                 
-                in += suma;
-                fin += suma;
+                // Creamos copia segura del subsegmento para el hilo
+                List<Jugador> copiaSublista = new ArrayList<>(this.jugadoresSesion.subList(indiceInicio, indiceFin));
                 
-                if (i == particiones - 2) fin = N; // Ajuste último tramo
+                // Lanzamos búsqueda sin índices, pasamos la sublista directa
+                lfj.add(this.poolServer.submit(new getIDHilos(copiaSublista, iD)));
+                
+                indiceInicio = indiceFin;
             }
-            
-            Jugador sesion = null;
-            
-            // Recogemos resultados
-            for (Future<Jugador> jug : lfj) {
-                try {
-                    sesion = jug.get();
-                    if (sesion != null) break; // Encontrado
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
+        } // Fin synchronized: liberamos el servidor para otros usuarios
+        
+        // FASE 2: Recogida de resultados (Sin bloqueo global)
+        for (Future<Jugador> jug : lfj) {
+            try {
+                sesion = jug.get(); // Esperamos resultado
+                if (sesion != null) break; // Encontrado
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
             }
-            
-            // Cancelar el resto de tareas si ya lo encontramos para ahorrar recursos
-            this.poolServer.execute(new cancelarFuture(lfj));
-            return sesion;
         }
+        
+        // Cancelamos tareas pendientes para ahorrar recursos
+        this.poolServer.execute(new cancelarFuture(lfj));
+        return sesion;
     }
 
     // --- CONEXIÓN Y REGISTRO ---
 
     /**
-     * Establece la conexión guardando el Stream en el Jugador.
+     * Asocia un stream de salida a un jugador existente.
+     * Evita dobles conexiones.
      */
     public void establecerConexion(Jugador jug, ObjectOutputStream out) throws IOException {
         synchronized (jug) {
             if (!jug.isSesionIniciada()) {
                 jug.setSesionIniciada(true);
-                jug.setOutputStream(out); // Guardamos el stream para broadcast
+                jug.setOutputStream(out); 
                 jugadoresConexion.add(jug);
             } else {
-                // Usuario ya conectado -> Rechazamos
+                // Usuario ya conectado: Rechazamos la NUEVA conexión.
+                // NO desconectamos al usuario antiguo.
                 try {
                     out.writeObject("El usuario ya ha iniciado sesion");
                     out.flush();
                 } catch(IOException e) {
                     e.printStackTrace();
-                } finally {
-                    // No cerramos el stream aquí, dejamos que AtenderJugador maneje el cierre
-                }
+                } 
             }
         }
     }
 
+    /**
+     * Registra un nuevo jugador si no existe.
+     */
     public Jugador registroSesionDefinitivo(String name, double saldo, ObjectOutputStream out) throws IOException {
         if (name == null || name.trim().isEmpty()) return null;
 
+        // Bloqueamos la lista global porque vamos a escribir en ella
         synchronized (jugadoresSesion) {
-            Jugador jug = this.getJugador(name); // Tu búsqueda concurrente
+            // Reutilizamos la búsqueda concurrente (seguro porque tenemos el lock)
+            Jugador jug = this.getJugador(name); 
 
             if (jug == null) {
                 jug = new Jugador(name, saldo);
@@ -246,6 +278,9 @@ public class ServicioRuleta {
         }
     }
 
+    /**
+     * Inicia sesión de un jugador existente.
+     */
     public Jugador inicioSesionDefinitivo(String name, ObjectOutputStream out) throws IOException {
         if (name == null || name.trim().isEmpty()) return null;
 
@@ -261,21 +296,19 @@ public class ServicioRuleta {
 
     // --- GESTIÓN DE APUESTAS ---
 
+    /**
+     * Valida y registra una apuesta.
+     * @return true si la apuesta fue aceptada, false si no (saldo insuficiente o mesa cerrada).
+     */
     public boolean anadirApuesta(Jugador jug, Apuesta apuesta) {
-        // Validación 1: Mesa Cerrada
         if (this.isNoVaMas) return false; 
-        
-        // Validación 2: Datos inválidos
         if (apuesta == null) return false;
 
-        // Validación 3 y Operación Atómica: Saldo
         synchronized (jug) {
             if (jug.getSaldo() < apuesta.getCantidad()) return false;
-            // Restamos saldo inmediatamente
             jug.sumaRestaSaldo(-apuesta.getCantidad());
         }
 
-        // Añadir apuesta al mapa thread-safe
         this.jugadorApuestas.computeIfAbsent(jug, k -> Collections.synchronizedList(new ArrayList<>()))
                             .add(apuesta);
         
@@ -283,12 +316,15 @@ public class ServicioRuleta {
     }
 
     // --- PREMIOS ---
+    
+    /**
+     * Calcula y reparte los premios de la ronda.
+     * Utiliza una barrera para sincronizar el envío de resultados.
+     */
     public void repartirPremio(Casilla ganadora, CountDownLatch count) {
-        // 1. CREAR SNAPSHOT: Copiamos las entradas a un Set seguro.
-        // Esto garantiza que el tamaño (.size()) coincida exactamente con los elementos que vamos a recorrer.
         Set<Map.Entry<Jugador, List<Apuesta>>> snapshot;
         
-        // Aunque ConcurrentHashMap es thread-safe, hacer esto asegura coherencia entre size e iteración
+        // Snapshot seguro para iterar
         synchronized (this.jugadorApuestas) { 
             snapshot = new HashSet<>(this.jugadorApuestas.entrySet());
         }
@@ -298,49 +334,47 @@ public class ServicioRuleta {
             return;
         }
 
-        // 2. Usamos el tamaño del SNAPSHOT para la barrera
+        // Barrera: Espera a (Jugadores con apuestas + 1 hilo principal)
         final CyclicBarrier starter = new CyclicBarrier(snapshot.size() + 1);
 
-        // 3. Iteramos sobre el SNAPSHOT (no sobre el mapa original)
         for (Map.Entry<Jugador, List<Apuesta>> entry : snapshot) {
             List<Apuesta> copiaApuestas;
-            // Sincronizamos la lista de apuestas individual por seguridad
             synchronized (entry.getValue()) {
                 copiaApuestas = new ArrayList<>(entry.getValue());
             }
-            // Usamos el pool global
             this.poolServer.execute(new MandarPremios(entry.getKey(), copiaApuestas, ganadora, starter));
         }
 
         try {
-            starter.await(); // Ahora seguro que coinciden
+            // Esperamos a que todos calculen sus premios
+            starter.await(); 
         } catch (InterruptedException | BrokenBarrierException e) {
             e.printStackTrace();
         } finally {
             if (count != null) count.countDown();
         }
     }
+
     // --- DESCONEXIÓN ---
 
+    /**
+     * Cierra la sesión de un jugador y guarda estado en BD.
+     */
     public void desconectarJugador(Jugador jug) {
         if (jug == null) return;
 
         synchronized (jug) {
             jug.setSesionIniciada(false);
             
-            // Intentamos cerrar recursos asociados al jugador
             try {
                 if (jug.getOutputStream() != null) jug.getOutputStream().close();
             } catch (IOException e) { /* Ignorar */ }
             
-            // Limpiamos referencias
             jug.setOutputStream(null);
-            // Si tuvieras socket en jugador: jug.setConexion(null);
         }
 
         jugadoresConexion.remove(jug);
         
-        // Persistencia en segundo plano
         if (BBDD != null) {
             this.poolServer.execute(new ActualizarBD(new ArrayList<>(this.jugadoresSesion), this.BBDD));
         }
