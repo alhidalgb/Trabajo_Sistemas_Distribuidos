@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<!ELEMENT jugadores (jugador*)>
+<!ELEMENT jugador (saldo)>
+<!ATTLIST jugador
+  id ID #REQUIRED
+>
+<!ELEMENT saldo (#PCDATA)>

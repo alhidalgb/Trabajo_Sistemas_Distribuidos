@@ -200,7 +200,11 @@ public class AtenderJugador implements Runnable {
                 } else if (cantidad > 10000) {
                     out.println("⚠️ El máximo permitido por operación es 10.000€.");
                 } else {
-                    jugador.setSaldo(jugador.getSaldo() + cantidad);
+                	
+                		//Esto es lo necesario.
+                    jugador.sumarGanancia(cantidad);
+                    
+                    
                     out.println("✅ Saldo añadido correctamente. Nuevo saldo: " + jugador.getSaldo() + "€");
                     break; // Salimos del bucle tras éxito
                 }
@@ -243,6 +247,9 @@ public class AtenderJugador implements Runnable {
             out.println("⏳ Esperando a que se abra la mesa...");
             
             // Sincronización con la mesa 
+            
+            
+            
             this.rule.VaMasAwait(); 
             out.println("--- ¡HAGAN JUEGO! (Mesa Abierta) ---");
             

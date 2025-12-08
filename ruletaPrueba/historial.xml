@@ -850,14 +850,4 @@
 <listapuestas fecha="Thu Dec 04 18:35:30 CET 2025" ganadora="[Numero=7, Color=ROJO, Docena=1]"/>
 <listapuestas fecha="Thu Dec 04 18:35:54 CET 2025" ganadora="[Numero=31, Color=NEGRO, Docena=3]"/>
 <listapuestas fecha="Thu Dec 04 18:36:18 CET 2025" ganadora="[Numero=24, Color=NEGRO, Docena=2]"/>
-<listapuestas fecha="Fri Dec 05 18:13:11 CET 2025" ganadora="[Numero=10, Color=NEGRO, Docena=1]"/>
-<listapuestas fecha="Fri Dec 05 18:13:35 CET 2025" ganadora="[Numero=36, Color=ROJO, Docena=3]"/>
-<listapuestas fecha="Fri Dec 05 18:13:59 CET 2025" ganadora="[Numero=28, Color=NEGRO, Docena=3]">
-        <jugador id="nunu">
-            <apuesta cantidad="6000.0" tipo="NUMERO" valor="0"/>
-            <apuesta cantidad="4234.0" tipo="COLOR" valor="ROJO"/>
-        </jugador>
-    </listapuestas>
-<listapuestas fecha="Fri Dec 05 18:14:23 CET 2025" ganadora="[Numero=4, Color=NEGRO, Docena=1]"/>
-<listapuestas fecha="Fri Dec 05 18:14:48 CET 2025" ganadora="[Numero=29, Color=NEGRO, Docena=3]"/>
 </historial>

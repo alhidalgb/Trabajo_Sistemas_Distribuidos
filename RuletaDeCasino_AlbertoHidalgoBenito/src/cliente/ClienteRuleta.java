@@ -24,6 +24,7 @@ public class ClienteRuleta {
             BufferedReader in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
             PrintWriter out = new PrintWriter(this.socket.getOutputStream(), true);
             BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in))
+           
         ) {
             System.out.println("✅ Conectado al Casino. Esperando instrucciones...");
             
@@ -38,7 +39,7 @@ public class ClienteRuleta {
 
                     String respuesta = null;
                     try {
-                        respuesta = future.get(3, TimeUnit.SECONDS); // ⏳ 30 segundos
+                        respuesta = future.get(30, TimeUnit.SECONDS); // ⏳ 30 segundos
                     } catch (TimeoutException e) {
                         System.out.println("⏳ Tiempo de espera agotado (30s). Se cerrará la conexión.");
                         future.cancel(true);
@@ -67,7 +68,8 @@ public class ClienteRuleta {
 
     private void cerrarConexion() {
         try {
-        	
+        		
+        	System.in.close();
     
             if (this.socket != null && !this.socket.isClosed()) {
                 this.socket.close();
