@@ -87,7 +87,7 @@ public class ClienteRuleta {
                         out.writeObject("SALIR"); 
                         out.flush();
                         System.out.println("¡Hasta pronto!");
-                        break;
+                        return;
                     default:
                         System.out.println("❌ Opción incorrecta.");
                 }

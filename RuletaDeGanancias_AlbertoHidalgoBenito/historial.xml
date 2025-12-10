@@ -123,4 +123,25 @@
 <listapuestas fecha="Wed Dec 10 11:33:37 CET 2025" ganadora="Casilla [15 | NEGRO]"/>
 <listapuestas fecha="Wed Dec 10 11:34:04 CET 2025" ganadora="Casilla [11 | NEGRO]"/>
 <listapuestas fecha="Wed Dec 10 11:34:31 CET 2025" ganadora="Casilla [25 | ROJO]"/>
+<listapuestas fecha="Wed Dec 10 15:20:00 CET 2025" ganadora="Casilla [36 | ROJO]"/>
+<listapuestas fecha="Wed Dec 10 15:20:27 CET 2025" ganadora="Casilla [10 | NEGRO]">
+        <jugador id="neymar">
+            <apuesta cantidad="6000.0" tipo="NUMERO" valor="0"/>
+        </jugador>
+    </listapuestas>
+<listapuestas fecha="Wed Dec 10 15:20:54 CET 2025" ganadora="Casilla [25 | ROJO]">
+        <jugador id="neymar">
+            <apuesta cantidad="5000.0" tipo="NUMERO" valor="0"/>
+            <apuesta cantidad="500.0" tipo="COLOR" valor="ROJO"/>
+        </jugador>
+    </listapuestas>
+<listapuestas fecha="Wed Dec 10 15:21:21 CET 2025" ganadora="Casilla [23 | ROJO]"/>
+<listapuestas fecha="Wed Dec 10 15:24:14 CET 2025" ganadora="Casilla [11 | NEGRO]"/>
+<listapuestas fecha="Wed Dec 10 15:24:41 CET 2025" ganadora="Casilla [32 | ROJO]"/>
+<listapuestas fecha="Wed Dec 10 15:25:08 CET 2025" ganadora="Casilla [14 | ROJO]"/>
+<listapuestas fecha="Wed Dec 10 15:25:35 CET 2025" ganadora="Casilla [13 | NEGRO]"/>
+<listapuestas fecha="Wed Dec 10 15:26:03 CET 2025" ganadora="Casilla [13 | NEGRO]"/>
+<listapuestas fecha="Wed Dec 10 15:26:30 CET 2025" ganadora="Casilla [29 | NEGRO]"/>
+<listapuestas fecha="Wed Dec 10 15:27:55 CET 2025" ganadora="Casilla [1 | ROJO]"/>
+<listapuestas fecha="Wed Dec 10 15:28:22 CET 2025" ganadora="Casilla [36 | ROJO]"/>
 </historial>
