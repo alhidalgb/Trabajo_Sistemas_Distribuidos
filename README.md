@@ -26,7 +26,7 @@ Aplicación multijugador que simula una ruleta de casino. Permite conexiones sim
 
 ```
 ┌─────────────┐         TCP/IP         ┌─────────────┐
-│   CLIENTE   │◄─────────────────────►│   SERVIDOR  │
+│   CLIENTE   │◄─────────────────────► │   SERVIDOR  │
 │             │   ObjectStreams        │             │
 │ - Interfaz  │                        │ - Lógica    │
 │ - Apuestas  │                        │ - Ruleta    │
