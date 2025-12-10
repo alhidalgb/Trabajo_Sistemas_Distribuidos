@@ -23,7 +23,7 @@ import modeloDominio.Jugador;
  * - El saldo del jugador se actualiza (incluso si está desconectado).
  * - Si hay conexión, se envía el mensaje visual y el comando de actualización.
  */
-public class MandarPremios implements Runnable {
+public class mandarPremios implements Runnable {
 
     // --- ATRIBUTOS ---
     private final List<Apuesta> listApuesta;
@@ -38,7 +38,7 @@ public class MandarPremios implements Runnable {
      * @param ganadora    La casilla ganadora generada por el servidor.
      * @param starter     Barrera para sincronizar el fin del cálculo con el resto de hilos.
      */
-    public MandarPremios(Jugador jug, List<Apuesta> listApuesta, Casilla ganadora, CyclicBarrier starter) {
+    public mandarPremios(Jugador jug, List<Apuesta> listApuesta, Casilla ganadora, CyclicBarrier starter) {
         this.ganadora = ganadora;
         this.listApuesta = listApuesta;
         this.starter = starter;
@@ -83,7 +83,7 @@ public class MandarPremios implements Runnable {
                         if (ganancia > 0) {
                             out.writeObject("\u001b[1m\u001b[33m🎉 ¡HAS GANADO: " + ganancia + "€! 🎉\u001b[0m");
                         } else {
-                             out.writeObject("\\u001b[1m\\u001b[33mNo ha habido suerte. Sigue minando!!!\\u001b[0m");
+                             out.writeObject("\u001b[1m\u001b[33m No ha habido suerte. Sigue minando!!! \u001b[0m");
                         }
                         
                         out.flush();

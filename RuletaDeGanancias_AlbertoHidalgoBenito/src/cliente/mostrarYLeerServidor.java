@@ -29,7 +29,7 @@ public class mostrarYLeerServidor implements Runnable {
             Object mensaje;
             
             // Bucle infinito de lectura bloqueante
-            while ((mensaje = in.readObject()) != null) {
+            while ((mensaje = in.readObject()) != null && !Thread.currentThread().isInterrupted()) {
                 
                 if (mensaje instanceof String) {
                     procesarMensajeTexto((String) mensaje);

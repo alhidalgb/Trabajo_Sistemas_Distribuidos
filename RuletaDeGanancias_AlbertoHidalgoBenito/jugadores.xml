@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <jugadores>
     <jugador id="nunu">
-        <saldo>0.0</saldo>
+        <saldo>300.0</saldo>
     </jugador>
     <jugador id="juwgazo.com">
         <saldo>3500.0</saldo>
+    </jugador>
+    <jugador id="neymar">
+        <saldo>10000.0</saldo>
     </jugador>
 </jugadores>

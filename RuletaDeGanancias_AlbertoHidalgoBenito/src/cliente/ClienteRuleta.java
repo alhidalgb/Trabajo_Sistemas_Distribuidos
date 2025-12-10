@@ -157,84 +157,169 @@ public class ClienteRuleta {
      * Asistente para crear un objeto Apuesta validado.
      */
     public Apuesta crearApuesta(BufferedReader teclado) throws IOException {
+        // 1. CHEQUEO INICIAL DE MESA CERRADA
         if (isNoVaMas) return null;
 
-        System.out.println("--- NUEVA APUESTA ---");
-        System.out.println("Saldo disponible: " + jugador.getSaldo() + "€");
-
-        // 🛑 CORRECCIÓN 1: VALIDACIÓN PREVIA DE SALDO
-        // Si no tienes ni para la apuesta mínima, te echamos antes de entrar al bucle.
-        if (jugador.getSaldo() < 5) {
-            System.out.println("❌ No tienes saldo suficiente para apostar (Mínimo 5€).");
-            System.out.println("👉 Escribe 'fin' para salir y recargar saldo en el menú principal.");
-            return null; // Devolvemos null para cancelar la creación
+        // 2. VALIDACIONES DE USUARIO (Sesión y Saldo mínimo)
+        if (jugador == null) {
+            System.out.println("❌ Error: No hay sesión iniciada.");
+            return null;
+        }
+        
+        if (this.jugador.getSaldo() < 5) {
+            System.out.println("❌ No tienes saldo suficiente para la apuesta mínima (5€).");
+            return null;
         }
 
-        // 1. CANTIDAD
+        System.out.println("\n--- NUEVA APUESTA ---");
+        System.out.println("Saldo actual: " + jugador.getSaldo() + "€");
+
+        // =====================================================================
+        // 1. PEDIR CANTIDAD
+        // =====================================================================
         double cantidad = 0;
         boolean cantidadValida = false;
 
         while (!cantidadValida) {
-            if (isNoVaMas) return null;
+            if (isNoVaMas) return null; // Si cierran mesa, salimos
 
-            // 🛑 CORRECCIÓN 2: OPCIÓN DE CANCELAR
-            System.out.println("Cantidad a apostar (o '0' para cancelar):");
+            System.out.println("¿Cuánto quieres apostar? (Mín 5€ - Máx 10.000€) [0 para Cancelar]");
+            
             String entrada = teclado.readLine();
-
+            
+            // Si cierran mesa mientras escribía o corta conexión
             if (isNoVaMas || entrada == null) return null;
 
             try {
                 cantidad = Double.parseDouble(entrada);
 
-                // Si escribe 0, cancelamos voluntariamente
+                // Opción de cancelar
                 if (cantidad == 0) {
                     System.out.println("⚠️ Apuesta cancelada.");
                     return null;
                 }
 
-                if (cantidad >= 5 && cantidad <= jugador.getSaldo()) {
-                    cantidadValida = true;
+                if (cantidad < 5) {
+                    System.out.println("❌ La cantidad mínima es 5€.");
+                } else if (cantidad > 10000) {
+                    System.out.println("❌ El máximo permitido es 10.000€.");
+                } else if (cantidad > jugador.getSaldo()) {
+                    System.out.println("❌ No tienes suficiente saldo.");
                 } else {
-                    System.out.println("❌ Cantidad inválida (Min 5€) o saldo insuficiente.");
+                    cantidadValida = true;
                 }
             } catch (NumberFormatException e) {
                 System.out.println("❌ Introduce un número válido.");
             }
         }
 
-        // 2. TIPO
-        TipoApuesta tipo = null;
-        while (tipo == null) {
+        // =====================================================================
+        // 2. PEDIR TIPO DE APUESTA
+        // =====================================================================
+        System.out.println("¿Qué tipo de apuesta quieres hacer?");
+        System.out.println("1- NUMERO (Pleno)");
+        System.out.println("2- COLOR");
+        System.out.println("3- PAR / IMPAR");
+        System.out.println("4- DOCENA");
+
+        TipoApuesta tipoSeleccionado = null;
+        while (tipoSeleccionado == null) {
             if (isNoVaMas) return null;
-            
-            System.out.println("Tipo: 1-NUMERO, 2-COLOR, 3-PAR/IMPAR, 4-DOCENA");
-            String s = teclado.readLine();
-            
-            if (isNoVaMas) return null;
-            
+
+            System.out.print("Opción > ");
             try {
+                String s = teclado.readLine();
+                if (isNoVaMas || s == null) return null;
+
                 int op = Integer.parseInt(s);
-                if (op >= 1 && op <= 4) tipo = TipoApuesta.values()[op - 1];
-                else System.out.println("❌ Opción inválida.");
-            } catch (Exception e) { System.out.println("❌ Error de formato."); }
+                if (op >= 1 && op <= 4) {
+                    tipoSeleccionado = TipoApuesta.values()[op - 1];
+                } else {
+                    System.out.println("❌ Elige entre 1 y 4.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("❌ Introduce un número válido.");
+            }
         }
 
-        // 3. VALOR
-        String valor = "";
-        while (valor.isEmpty()) {
+        // =====================================================================
+        // 3. PEDIR VALOR ESPECÍFICO 
+        // =====================================================================
+        String valorApostado = "";
+        boolean valorValido = false;
+
+        while (!valorValido) {
             if (isNoVaMas) return null;
-            
-            System.out.println("Valor (ej: ROJO, 14, PAR):");
-            String s = teclado.readLine();
-            
-            if (isNoVaMas) return null;
-            if (s != null && !s.trim().isEmpty()) valor = s.toUpperCase();
-            else System.out.println("❌ El valor no puede estar vacío.");
+
+            try {
+                switch (tipoSeleccionado) {
+                    case NUMERO:
+                        System.out.println("Elige número (0-36):");
+                        String lineaNum = teclado.readLine();
+                        if (isNoVaMas || lineaNum == null) return null;
+
+                        int num = Integer.parseInt(lineaNum);
+                        
+                        // --- VALIDACIÓN DE RANGO ---
+                        if (num >= 0 && num <= 36) {
+                            valorApostado = String.valueOf(num);
+                            valorValido = true;
+                        } else {
+                            System.out.println("❌ El número debe estar entre 0 y 36.");
+                        }
+                        break;
+
+                    case COLOR:
+                        System.out.println("Elige color (ROJO / NEGRO):");
+                        String color = teclado.readLine();
+                        if (isNoVaMas || color == null) return null;
+
+                        color = color.toUpperCase().trim();
+                        if (color.equals("ROJO") || color.equals("NEGRO")) {
+                            valorApostado = color;
+                            valorValido = true;
+                        } else {
+                            System.out.println("❌ Escribe ROJO o NEGRO.");
+                        }
+                        break;
+
+                    case PAR_IMPAR:
+                        System.out.println("Elige paridad (PAR / IMPAR):");
+                        String paridad = teclado.readLine();
+                        if (isNoVaMas || paridad == null) return null;
+
+                        paridad = paridad.toUpperCase().trim();
+                        if (paridad.equals("PAR") || paridad.equals("IMPAR")) {
+                            valorApostado = paridad;
+                            valorValido = true;
+                        } else {
+                            System.out.println("❌ Escribe PAR o IMPAR.");
+                        }
+                        break;
+
+                    case DOCENA:
+                        System.out.println("Elige docena (1, 2 o 3):");
+                        String docena = teclado.readLine();
+                        if (isNoVaMas || docena == null) return null;
+
+                        docena = docena.trim();
+                        if (docena.equals("1") || docena.equals("2") || docena.equals("3")) {
+                            valorApostado = docena;
+                            valorValido = true;
+                        } else {
+                            System.out.println("❌ Escribe 1, 2 o 3.");
+                        }
+                        break;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("❌ Formato incorrecto.");
+            }
         }
 
+        // Chequeo final
         if (isNoVaMas) return null;
 
-        return new Apuesta(jugador, tipo, valor, cantidad);
+        return new Apuesta(jugador, tipoSeleccionado, valorApostado, cantidad);
     }
 
     // --- MÉTODOS AUXILIARES ---

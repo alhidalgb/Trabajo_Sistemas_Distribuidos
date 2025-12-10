@@ -7,7 +7,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import logicaRuleta.concurrencia.getIDHilos;
-import logicaRuleta.concurrencia.MandarPremios;
+import logicaRuleta.concurrencia.mandarPremios;
 import logicaRuleta.concurrencia.cancelarFuture;
 import logicaRuleta.concurrencia.mandarMensaje;
 import modeloDominio.Apuesta;
@@ -342,7 +342,7 @@ public class ServicioRuleta {
             synchronized (entry.getValue()) {
                 copiaApuestas = new ArrayList<>(entry.getValue());
             }
-            this.poolServer.execute(new MandarPremios(entry.getKey(), copiaApuestas, ganadora, starter));
+            this.poolServer.execute(new mandarPremios(entry.getKey(), copiaApuestas, ganadora, starter));
         }
 
         try {
